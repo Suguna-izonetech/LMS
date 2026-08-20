@@ -1,0 +1,45 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.db.database import Base, engine
+from app.routers import auth, teacher, institute_admin
+
+app = FastAPI(title="KITE LMS Teacher Portal API", version="1.0.0")
+
+# Create tables if they don't exist
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Warning: Could not create database tables on startup: {e}")
+
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    # Expose Content-Disposition header so browser downloads preserve custom filename
+    expose_headers=["Content-Disposition"]
+)
+
+# Serve uploads directory static files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Include Routers
+app.include_router(auth.router, prefix="/api")
+app.include_router(teacher.router)
+app.include_router(institute_admin.router, prefix="/api")
+
+@app.get("/")
+def root():
+    return {
+        "message": "KITE LMS Teacher Portal API is running!",
+        "version": "1.0.0"
+    }
+
