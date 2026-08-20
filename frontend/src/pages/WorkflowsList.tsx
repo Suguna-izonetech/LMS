@@ -4,7 +4,8 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import {
-  LoadingState, TableContainer, Table, TableHeader, TableBody, TableRow, TableHeaderCell, TableCell, Modal, Pagination
+  LoadingState, TableContainer, Table, TableHeader, TableBody, TableRow, TableHeaderCell, TableCell, Modal, Pagination,
+  PageHeader, Breadcrumb, Button, Card, CardContent, Badge, Input, Select
 } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 import { usePagination } from '../hooks/usePagination';
@@ -141,7 +142,7 @@ export const WorkflowsList: React.FC = () => {
         title="Workflow Automations"
         description="Design conditional rule engines to automate enrollments, emails, and CRM progression."
         breadcrumbs={<Breadcrumb items={[{ label: 'Institute Manager' }, { label: 'Workflows' }]} />}
-        action={
+        actions={
             <Button variant="primary" onClick={() => setIsModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Workflow
             </Button>
@@ -214,9 +215,9 @@ export const WorkflowsList: React.FC = () => {
                                               <span className="font-bold text-slate-200">{wf.name}</span>
                                           </TableCell>
                                           <TableCell>
-                                              <Badge variant="secondary" className="bg-slate-800 text-indigo-300">
-                                                  {wf.trigger_event}
-                                              </Badge>
+                                               <Badge variant="neutral" className="bg-slate-800 text-indigo-300">
+                                                   {wf.trigger_event}
+                                               </Badge>
                                           </TableCell>
                                           <TableCell>
                                               <div className="flex flex-col gap-1 text-xs text-slate-400">
@@ -231,7 +232,7 @@ export const WorkflowsList: React.FC = () => {
                                           <TableCell>
                                               {wf.is_active ? 
                                                   <Badge variant="success" className="bg-emerald-500/10 text-emerald-400">Active</Badge> : 
-                                                  <Badge variant="secondary">Disabled</Badge>
+                                                   <Badge variant="neutral">Disabled</Badge>
                                               }
                                           </TableCell>
                                           <TableCell className="text-right space-x-2">
@@ -344,7 +345,7 @@ export const WorkflowsList: React.FC = () => {
           </Card>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Workflow" className="max-w-2xl w-full">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Workflow" size="lg">
           <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
