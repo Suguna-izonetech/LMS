@@ -21,6 +21,8 @@ lenv/
 
 # Python tools
 .pytest_cache/
+__pycache__/
+*.py[cod]
 .mypy_cache/
 .ruff_cache/
 
