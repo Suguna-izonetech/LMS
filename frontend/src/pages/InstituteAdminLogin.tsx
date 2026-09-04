@@ -85,7 +85,7 @@ export const InstituteAdminLogin: React.FC = () => {
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
                   <Input
                     label="Email Address / Username"
-                    placeholder="admin@kite.lms"
+                    placeholder="instituteadmin@kite.lms"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -140,7 +140,7 @@ export const InstituteAdminLogin: React.FC = () => {
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
                   <Input
                     label="Email Address"
-                    placeholder="admin@kite.lms"
+                    placeholder="instituteadmin@kite.lms"
                     type="email"
                     required
                     value={email}
@@ -171,8 +171,8 @@ export const InstituteAdminLogin: React.FC = () => {
 
         {/* Demo Helper Info */}
         <div className="rounded-lg bg-slate-900/45 border border-slate-900/70 p-4 text-center text-xs text-slate-500">
-          <p className="font-bold text-slate-400 mb-1">Development Credentials</p>
-          <p className="mb-0.5">Institute Admin: <span className="text-slate-350 font-semibold">institute_admin</span> / <span className="text-slate-350 font-semibold">password123</span></p>
+          <p className="font-bold text-slate-400 mb-1">Institute Admin Credentials</p>
+          <p className="mb-0.5">Login: <span className="text-slate-350 font-semibold">instituteadmin@kite.lms</span> (or <span className="text-slate-350 font-semibold">institute_admin</span>) / <span className="text-slate-350 font-semibold">password123</span></p>
         </div>
       </div>
     </div>

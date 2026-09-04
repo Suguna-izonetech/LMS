@@ -114,6 +114,18 @@ export const BillingAndInvoicing: React.FC = () => {
       return '$';
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: invoices, itemsPerPage: 10 });
+
   if (uiState === 'loading') return (
       <div className="space-y-6">
           <PageHeader title="Billing & Invoicing" description="Manage GST and invoices." breadcrumbs={<Breadcrumb items={[{ label: 'Billing' }]} />} />
@@ -229,12 +241,6 @@ export const BillingAndInvoicing: React.FC = () => {
                                   <label className="text-xs font-semibold text-slate-400">Invoice Prefix</label>
                                   <Input value={prefix} onChange={e => setPrefix(e.target.value)} placeholder="INV-" required />
                               </div>
-                              <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-slate-400">Next Invoice Number (Preview)</label>
-                                  <div className="bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-500">
-                                      {prefix}{config?.next_invoice_number.toString().padStart(6, '0') || '000001'}
-                                  </div>
-                              </div>
                           </div>
                       </div>
                       
@@ -257,20 +263,6 @@ export const BillingAndInvoicing: React.FC = () => {
                   </div>
               </div>
               <CardContent className="p-0">
-                 {(() => {
-                    const {
-                      paginatedData,
-                      currentPage,
-                      totalPages,
-                      startIndex,
-                      endIndex,
-                      totalItems,
-                      goToPage,
-                      nextPage,
-                      prevPage
-                    } = usePagination({ data: invoices, itemsPerPage: 10 });
-
-                    return (
                   <TableContainer>
                       <Table>
                           <TableHeader>
@@ -344,8 +336,6 @@ export const BillingAndInvoicing: React.FC = () => {
                           onPrev={prevPage}
                       />
                   </TableContainer>
-                    );
-                  })()}
               </CardContent>
           </Card>
       )}

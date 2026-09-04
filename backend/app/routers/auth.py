@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -13,10 +14,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=TokenResponse)
 def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
-    # Find user by username or email
+    # Find user by username or email (case-insensitive and trimmed)
+    identifier = login_data.username_or_email.strip()
     user = db.query(User).filter(
-        (User.email == login_data.username_or_email) | 
-        (User.username == login_data.username_or_email)
+        (func.lower(User.email) == identifier.lower()) | 
+        (func.lower(User.username) == identifier.lower())
     ).first()
     
     if not user or not verify_password(login_data.password, user.hashed_password):
@@ -31,12 +33,13 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
             detail="User account is deactivated"
         )
         
-    # Teacher Role Validation (ensure the user is a teacher or admin)
+    # Role Validation (ensure user is a teacher, admin, instituteadmin, or student)
     user_roles = [r.name.lower() for r in user.roles]
-    if "teacher" not in user_roles and "admin" not in user_roles:
+    allowed_login_roles = {"teacher", "admin", "instituteadmin", "student"}
+    if not any(r in allowed_login_roles for r in user_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Only Teacher accounts can log into this portal."
+            detail="Access denied. Account role not authorized for login."
         )
         
     # Generate tokens
@@ -73,9 +76,10 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
 
 @router.post("/institute/login", response_model=TokenResponse)
 def institute_login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+    identifier = login_data.username_or_email.strip()
     user = db.query(User).filter(
-        (User.email == login_data.username_or_email) | 
-        (User.username == login_data.username_or_email)
+        (func.lower(User.email) == identifier.lower()) | 
+        (func.lower(User.username) == identifier.lower())
     ).first()
     
     if not user or not verify_password(login_data.password, user.hashed_password):
@@ -91,10 +95,11 @@ def institute_login(login_data: LoginRequest, response: Response, db: Session = 
         )
         
     user_roles = [r.name.lower() for r in user.roles]
-    if "instituteadmin" not in user_roles:
+    allowed_roles = {"instituteadmin", "admin", "platformadmin", "teacher"}
+    if not any(r in allowed_roles for r in user_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Only Institute Admin accounts can log into this portal."
+            detail="Access denied. Only Institute Admin, Admin, or Teacher accounts can log into this portal."
         )
         
     access_token = create_access_token(subject=user.id)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Upload, Edit2, Trash2, CheckCircle2, FileText, Paperclip, Clock } from 'lucide-react';
+import { Calendar, Search, Upload, Edit2, Trash2, CheckCircle2, FileText, Paperclip, Clock, Download } from 'lucide-react';
 import api from '../api/client';
 import {
   PageHeader,
@@ -213,6 +213,18 @@ export const TasksList: React.FC = () => {
     }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: filteredTasks, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -278,118 +290,102 @@ export const TasksList: React.FC = () => {
         </CardContent>
       </Card>
 
-      {(() => {
-        const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-        } = usePagination({ data: filteredTasks, itemsPerPage: 10 });
-
-        if (filteredTasks.length === 0) {
-          return (
-            <EmptyState
-              title="No Tasks Found"
-              description="You have not created any assignments or homework tasks."
-              actionLabel="Create Task"
-              onActionClick={openCreateForm}
-            />
-          );
-        }
-
-        return (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHeaderCell>Task Title</TableHeaderCell>
-                  <TableHeaderCell>Course & Batch</TableHeaderCell>
-                  <TableHeaderCell>Deadline</TableHeaderCell>
-                  <TableHeaderCell>Attachments</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map(t => (
-                <TableRow key={t.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-slate-950 border border-slate-850 text-indigo-400">
-                        <CheckCircle2 className="h-4.5 w-4.5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">{t.title}</span>
-                        <span className="text-[10px] text-slate-500 max-w-[250px] truncate">{t.description}</span>
-                      </div>
+      {filteredTasks.length === 0 ? (
+        <EmptyState
+          title="No Tasks Found"
+          description="You have not created any assignments or homework tasks."
+          actionLabel="Create Task"
+          onActionClick={openCreateForm}
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Task Title</TableHeaderCell>
+                <TableHeaderCell>Course & Batch</TableHeaderCell>
+                <TableHeaderCell>Deadline</TableHeaderCell>
+                <TableHeaderCell>Attachments</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map(t => (
+              <TableRow key={t.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                      <FileText className="w-5 h-5" />
                     </div>
-                  </TableCell>
-                  <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-slate-300 font-medium text-sm">{t.course_title}</span>
-                      <span className="text-slate-500 text-xs">{t.batch_name}</span>
+                      <span className="font-semibold text-slate-200">{t.title}</span>
+                      <span className="text-xs text-slate-500 max-w-[280px] truncate">{t.description}</span>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                      <div className="flex items-center gap-2 text-slate-300">
-                          <Clock className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-sm font-medium">{new Date(t.deadline).toLocaleString()}</span>
-                      </div>
-                  </TableCell>
-                  <TableCell>
-                      <div className="flex items-center gap-2">
-                          <Paperclip className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-slate-400 font-bold">{t.attachments.length} files</span>
-                      </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={t.status === 'published' ? 'success' : 'warning'}>
-                      {t.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => openEditForm(t)}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedTask(t);
-                          setIsDeleteOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            totalItems={totalItems}
-            onPageChange={goToPage}
-            onNext={nextPage}
-            onPrev={prevPage}
-          />
-        </TableContainer>
-        );
-      })()}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-slate-300 font-medium text-xs">{courses.find(c => c.id === t.course_id)?.title || 'All Courses'}</span>
+                    <span className="text-[10px] text-slate-500">Batch #{t.batch_id || 'All'}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-slate-300">
+                    {t.deadline ? new Date(t.deadline).toLocaleDateString() : 'No Deadline'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {t.attachments && t.attachments.length > 0 ? (
+                    <a href={`http://localhost:8000${t.attachments[0].file_url}`} target="_blank" rel="noreferrer" className="text-indigo-400 text-xs hover:underline flex items-center gap-1">
+                      <Download className="w-3 h-3" /> {t.attachments[0].file_name || 'View File'}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-600 italic">None</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={t.status === 'published' ? 'success' : 'neutral'}>
+                    {t.status.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => openEditForm(t)}
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTask(t);
+                        setIsDeleteOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          totalItems={totalItems}
+          onPageChange={goToPage}
+          onNext={nextPage}
+          onPrev={prevPage}
+        />
+      </TableContainer>
+      )}
 
       {/* Delete confirm */}
       <ConfirmationDialog

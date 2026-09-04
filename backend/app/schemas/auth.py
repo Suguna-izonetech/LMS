@@ -31,7 +31,7 @@ class RoleResponse(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
-    email: EmailStr
+    email: str
     is_active: bool
     institute_id: Optional[int] = None
     roles: List[RoleResponse] = []
@@ -44,7 +44,7 @@ class UpdatePasswordRequest(BaseModel):
     new_password: str
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 class ResetPasswordRequest(BaseModel):
     token: str

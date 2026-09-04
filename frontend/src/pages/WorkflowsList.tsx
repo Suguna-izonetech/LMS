@@ -87,6 +87,16 @@ export const WorkflowsList: React.FC = () => {
       }
   };
 
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+      try {
+          await api.put(`/institute-admin/workflows/${id}`, { is_active: !currentStatus });
+          success("Workflow status updated");
+          fetchData();
+      } catch (e) {
+          showError("Failed to update status");
+      }
+  };
+
   const handleAddAction = () => {
       setActions([...actions, { type: 'Send Email', payload: '{"template": "welcome"}' }]);
   };
@@ -128,6 +138,30 @@ export const WorkflowsList: React.FC = () => {
           setIsSubmitting(false);
       }
   };
+
+  const {
+      paginatedData: paginatedWorkflows,
+      currentPage: workflowsPage,
+      totalPages: workflowsTotalPages,
+      startIndex: workflowsStartIndex,
+      endIndex: workflowsEndIndex,
+      totalItems: workflowsTotalItems,
+      goToPage: goToWorkflowsPage,
+      nextPage: nextWorkflowsPage,
+      prevPage: prevWorkflowsPage
+  } = usePagination({ data: workflows, itemsPerPage: 10 });
+
+  const {
+      paginatedData: paginatedLogs,
+      currentPage: logsPage,
+      totalPages: logsTotalPages,
+      startIndex: logsStartIndex,
+      endIndex: logsEndIndex,
+      totalItems: logsTotalItems,
+      goToPage: goToLogsPage,
+      nextPage: nextLogsPage,
+      prevPage: prevLogsPage
+  } = usePagination({ data: logs, itemsPerPage: 10 });
 
   if (uiState === 'loading') return (
       <div className="space-y-6">
@@ -183,70 +217,61 @@ export const WorkflowsList: React.FC = () => {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {(() => {
-                                  const {
-                                      paginatedData,
-                                      currentPage,
-                                      totalPages,
-                                      startIndex,
-                                      endIndex,
-                                      totalItems,
-                                      goToPage,
-                                      nextPage,
-                                      prevPage
-                                  } = usePagination({ data: workflows, itemsPerPage: 10 });
-                                  
-                                  if (workflows.length === 0) {
-                                      return (
-                                          <TableRow>
-                                              <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                                  <GitBranch className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                                                  <p>No workflows configured.</p>
-                                              </TableCell>
-                                          </TableRow>
-                                      );
-                                  }
-                                  
-                                  return (
-                                      <>
-                                          {paginatedData.map(wf => (
-                                              <TableRow key={wf.id}>
+                              {workflows.length === 0 ? (
+                                  <TableRow>
+                                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                          <GitBranch className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                                          <p>No workflows configured.</p>
+                                      </TableCell>
+                                  </TableRow>
+                              ) : (
+                                  paginatedWorkflows.map(wf => (
+                                      <TableRow key={wf.id}>
                                           <TableCell>
                                               <span className="font-bold text-slate-200">{wf.name}</span>
                                           </TableCell>
                                           <TableCell>
-                                               <Badge variant="neutral" className="bg-slate-800 text-indigo-300">
-                                                   {wf.trigger_event}
-                                               </Badge>
+                                              <Badge variant="info" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-mono text-xs">
+                                                  {wf.trigger_event}
+                                              </Badge>
                                           </TableCell>
                                           <TableCell>
-                                              <div className="flex flex-col gap-1 text-xs text-slate-400">
-                                                  {wf.actions.map(act => (
-                                                      <span key={act.id} className="flex items-center gap-1">
-                                                          <Play className="w-3 h-3 text-slate-500" />
+                                              <div className="flex flex-wrap gap-1">
+                                                  {wf.actions.map((act, idx) => (
+                                                      <span key={idx} className="text-[10px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded">
                                                           {act.action_type}
                                                       </span>
                                                   ))}
                                               </div>
                                           </TableCell>
                                           <TableCell>
-                                              {wf.is_active ? 
-                                                  <Badge variant="success" className="bg-emerald-500/10 text-emerald-400">Active</Badge> : 
-                                                   <Badge variant="neutral">Disabled</Badge>
-                                              }
+                                              <button 
+                                                  onClick={() => handleToggleStatus(wf.id, wf.is_active)}
+                                                  className={`px-2 py-0.5 rounded text-xs font-semibold ${wf.is_active ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}
+                                              >
+                                                  {wf.is_active ? 'Active' : 'Disabled'}
+                                              </button>
                                           </TableCell>
-                                          <TableCell className="text-right space-x-2">
-                                              <Button variant="outline" size="sm" onClick={() => handleDelete(wf.id)} title="Delete Workflow">
+                                          <TableCell className="text-right">
+                                              <Button variant="danger" size="sm" onClick={() => handleDelete(wf.id)}>
                                                   <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                                               </Button>
                                           </TableCell>
                                       </TableRow>
-                                  ))}
-                                  </>
-                                );
-                              })()}
+                                  ))
+                              )}
                           </TableBody>
                       </Table>
+                      <Pagination
+                          currentPage={workflowsPage}
+                          totalPages={workflowsTotalPages}
+                          startIndex={workflowsStartIndex}
+                          endIndex={workflowsEndIndex}
+                          totalItems={workflowsTotalItems}
+                          onPageChange={goToWorkflowsPage}
+                          onNext={nextWorkflowsPage}
+                          onPrev={prevWorkflowsPage}
+                      />
                   </TableContainer>
               </CardContent>
           </Card>
@@ -266,34 +291,16 @@ export const WorkflowsList: React.FC = () => {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {(() => {
-                                  const {
-                                      paginatedData: paginatedLogs,
-                                      currentPage: logsPage,
-                                      totalPages: logsTotalPages,
-                                      startIndex: logsStartIndex,
-                                      endIndex: logsEndIndex,
-                                      totalItems: logsTotalItems,
-                                      goToPage: goToLogsPage,
-                                      nextPage: nextLogsPage,
-                                      prevPage: prevLogsPage
-                                  } = usePagination({ data: logs, itemsPerPage: 10 });
-                                  
-                                  if (logs.length === 0) {
-                                      return (
-                                          <TableRow>
-                                              <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                                                  <Clock className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                                                  <p>No executions yet.</p>
-                                              </TableCell>
-                                          </TableRow>
-                                      );
-                                  }
-
-                                  return (
-                                      <>
-                                          {paginatedLogs.map(log => (
-                                              <TableRow key={log.id}>
+                              {logs.length === 0 ? (
+                                  <TableRow>
+                                      <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                          <Clock className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                                          <p>No executions yet.</p>
+                                      </TableCell>
+                                  </TableRow>
+                              ) : (
+                                  paginatedLogs.map(log => (
+                                      <TableRow key={log.id}>
                                           <TableCell>
                                               <span className="text-sm text-slate-300">
                                                   {new Date(log.execution_date).toLocaleString()}
@@ -319,27 +326,21 @@ export const WorkflowsList: React.FC = () => {
                                                   </span>
                                               )}
                                           </TableCell>
-                                          </TableRow>
-                                          ))}
-                                          <TableRow>
-                                              <TableCell colSpan={4} className="p-0 border-none">
-                                                  <Pagination
-                                                      currentPage={logsPage}
-                                                      totalPages={logsTotalPages}
-                                                      startIndex={logsStartIndex}
-                                                      endIndex={logsEndIndex}
-                                                      totalItems={logsTotalItems}
-                                                      onPageChange={goToLogsPage}
-                                                      onNext={nextLogsPage}
-                                                      onPrev={prevLogsPage}
-                                                  />
-                                              </TableCell>
-                                          </TableRow>
-                                      </>
-                                  );
-                              })()}
+                                      </TableRow>
+                                  ))
+                              )}
                           </TableBody>
                       </Table>
+                      <Pagination
+                          currentPage={logsPage}
+                          totalPages={logsTotalPages}
+                          startIndex={logsStartIndex}
+                          endIndex={logsEndIndex}
+                          totalItems={logsTotalItems}
+                          onPageChange={goToLogsPage}
+                          onNext={nextLogsPage}
+                          onPrev={prevLogsPage}
+                      />
                   </TableContainer>
               </CardContent>
           </Card>

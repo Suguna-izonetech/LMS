@@ -23,9 +23,23 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const authUser = await login(email, password);
       toast.success('Signed in successfully!');
-      navigate('/teacher/dashboard');
+      
+      if (authUser?.roles) {
+        const roles = authUser.roles.map(r => r.name.toLowerCase());
+        if (roles.includes('student')) {
+          navigate('/student/dashboard');
+        } else if (roles.includes('instituteadmin')) {
+          navigate('/institute-admin/dashboard');
+        } else if (roles.includes('admin') || roles.includes('platformadmin')) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/teacher/dashboard');
+        }
+      } else {
+        navigate('/teacher/dashboard');
+      }
     } catch (err: any) {
       console.error(err);
       const msg = err.response?.data?.detail || 'Invalid email or password.';
@@ -92,7 +106,7 @@ export const Login: React.FC = () => {
         <div className="rounded-lg bg-slate-900/45 border border-slate-900/70 p-4 text-center text-xs text-slate-500">
           <p className="font-bold text-slate-400 mb-1">Development Credentials</p>
           <p className="mb-0.5">Teacher: <span className="text-slate-350 font-semibold">teacher@kite.lms</span> / <span className="text-slate-350 font-semibold">password123</span></p>
-          <p>Student (rejection test): <span className="text-slate-350 font-semibold">student@kite.lms</span> / <span className="text-slate-350 font-semibold">password123</span></p>
+          <p>Student: <span className="text-slate-350 font-semibold">student@kite.lms</span> / <span className="text-slate-350 font-semibold">password123</span></p>
         </div>
       </div>
     </div>

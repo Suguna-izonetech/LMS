@@ -181,6 +181,30 @@ export const CertificatesList: React.FC = () => {
       }
   };
 
+  const {
+    paginatedData: paginatedRecords,
+    currentPage: recordsPage,
+    totalPages: recordsTotalPages,
+    startIndex: recordsStartIndex,
+    endIndex: recordsEndIndex,
+    totalItems: recordsTotalItems,
+    goToPage: goToRecordsPage,
+    nextPage: nextRecordsPage,
+    prevPage: prevRecordsPage
+  } = usePagination({ data: records, itemsPerPage: 10 });
+
+  const {
+    paginatedData: paginatedTemplates,
+    currentPage: templatesPage,
+    totalPages: templatesTotalPages,
+    startIndex: templatesStartIndex,
+    endIndex: templatesEndIndex,
+    totalItems: templatesTotalItems,
+    goToPage: goToTemplatesPage,
+    nextPage: nextTemplatesPage,
+    prevPage: prevTemplatesPage
+  } = usePagination({ data: templates, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -236,20 +260,7 @@ export const CertificatesList: React.FC = () => {
                 <>
                   {records.length === 0 ? (
                         <EmptyState title="No Certificates Issued" description="You have not issued any certificates yet." icon={<Award className="w-12 h-12 text-slate-700" />} />
-                    ) : (() => {
-                          const {
-                            paginatedData: paginatedRecords,
-                            currentPage: recordsPage,
-                            totalPages: recordsTotalPages,
-                            startIndex: recordsStartIndex,
-                            endIndex: recordsEndIndex,
-                            totalItems: recordsTotalItems,
-                            goToPage: goToRecordsPage,
-                            nextPage: nextRecordsPage,
-                            prevPage: prevRecordsPage
-                          } = usePagination({ data: records, itemsPerPage: 10 });
-
-                          return (
+                    ) : (
                         <TableContainer>
                           <Table>
                             <TableHeader>
@@ -308,30 +319,15 @@ export const CertificatesList: React.FC = () => {
                               onPrev={prevRecordsPage}
                           />
                         </TableContainer>
-                          );
-                        })()
-                    }
-                        </>
                     )}
+                </>
+            )}
             
             {activeTab === 'templates' && (
                 <>
                   {templates.length === 0 ? (
                         <EmptyState title="No Templates" description="Create a certificate template to start issuing them to students." icon={<LayoutTemplate className="w-12 h-12 text-slate-700" />} />
-                    ) : (() => {
-                          const {
-                            paginatedData: paginatedTemplates,
-                            currentPage: templatesPage,
-                            totalPages: templatesTotalPages,
-                            startIndex: templatesStartIndex,
-                            endIndex: templatesEndIndex,
-                            totalItems: templatesTotalItems,
-                            goToPage: goToTemplatesPage,
-                            nextPage: nextTemplatesPage,
-                            prevPage: prevTemplatesPage
-                          } = usePagination({ data: templates, itemsPerPage: 10 });
-
-                          return (
+                    ) : (
                         <TableContainer>
                           <Table>
                             <TableHeader>
@@ -386,11 +382,9 @@ export const CertificatesList: React.FC = () => {
                               onPrev={prevTemplatesPage}
                           />
                         </TableContainer>
-                          );
-                        })()
-                    }
-                        </>
                     )}
+                </>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { CheckCircle, XCircle, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface Toast {
   id: string;
@@ -14,6 +14,8 @@ interface ToastContextType {
   toast: (message: string, type: ToastType) => void;
   success: (message: string) => void;
   error: (message: string) => void;
+  warning: (message: string) => void;
+  info: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -44,17 +46,34 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const success = useCallback((message: string) => toast(message, 'success'), [toast]);
   const error = useCallback((message: string) => toast(message, 'error'), [toast]);
+  const warning = useCallback((message: string) => toast(message, 'warning'), [toast]);
+  const info = useCallback((message: string) => toast(message, 'info'), [toast]);
+
+  const getToastStyle = (type: ToastType) => {
+    switch (type) {
+      case 'success':
+        return 'bg-emerald-600';
+      case 'error':
+        return 'bg-rose-600';
+      case 'warning':
+        return 'bg-amber-600';
+      case 'info':
+        return 'bg-sky-600';
+      default:
+        return 'bg-slate-800';
+    }
+  };
 
   return (
-    <ToastContext.Provider value={{ toast, success, error }}>
+    <ToastContext.Provider value={{ toast, success, error, warning, info }}>
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white pointer-events-auto transition-all transform duration-300 translate-y-0 opacity-100 ${
-              t.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
-            }`}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white pointer-events-auto transition-all transform duration-300 translate-y-0 opacity-100 ${getToastStyle(
+              t.type
+            )}`}
           >
             {t.type === 'success' ? (
               <CheckCircle className="w-5 h-5" />

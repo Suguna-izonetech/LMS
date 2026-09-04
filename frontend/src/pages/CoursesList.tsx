@@ -55,6 +55,8 @@ export const CoursesList: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+  const [errorMessage, setErrorMessage] = useState<string>('Could not load academic course structures from the server.');
+
   const fetchCourses = async () => {
     setUiState('loading');
     try {
@@ -62,9 +64,15 @@ export const CoursesList: React.FC = () => {
       setCourses(res.data);
       if (res.data.length === 0) setUiState('empty');
       else setUiState('normal');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      error('Failed to load courses');
+      if (err.response?.status === 403) {
+        setErrorMessage('Access Denied (403): Your current session does not have Institute Admin or Teacher privileges. Please sign in with instituteadmin@kite.lms.');
+        error('Access denied. Please log in with an authorized Institute Admin account.');
+      } else {
+        setErrorMessage(err.response?.data?.detail || 'Could not load academic course structures from the server.');
+        error('Failed to load courses');
+      }
       setUiState('error');
     }
   };
@@ -83,6 +91,26 @@ export const CoursesList: React.FC = () => {
     return matchesSearch && matchesType && matchesVisibility && matchesStatus;
   });
 
+  const handleDeleteClick = (course: Course) => {
+    setSelectedCourse(course);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedCourse) return;
+    try {
+      await api.delete(`/institute-admin/courses/${selectedCourse.id}`);
+      success(`Course "${selectedCourse.title}" removed successfully.`);
+      fetchCourses();
+    } catch (err) {
+      console.error(err);
+      error('Failed to delete course');
+    } finally {
+      setIsDeleteOpen(false);
+      setSelectedCourse(null);
+    }
+  };
+
   // Must be called at top level — before any conditional returns
   const {
     paginatedData,
@@ -96,26 +124,11 @@ export const CoursesList: React.FC = () => {
     prevPage
   } = usePagination({ data: filteredCourses, itemsPerPage: 10 });
 
-  const handleDeleteConfirm = async () => {
-    if (selectedCourse) {
-      try {
-        await api.delete(`/institute-admin/courses/${selectedCourse.id}`);
-        setIsDeleteOpen(false);
-        setSelectedCourse(null);
-        fetchCourses(); // refresh
-        success('Course deleted successfully');
-      } catch (err) {
-        console.error(err);
-        error('Failed to delete course');
-      }
-    }
-  };
-
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
         <PageHeader title="Course List" description="Manage and organize your courses." breadcrumbs={<Breadcrumb items={[{ label: 'Courses' }]} />} />
-        <LoadingState message="Fetching core courses database records..." />
+        <LoadingState message="Loading course catalog..." />
       </div>
     );
   }
@@ -126,10 +139,15 @@ export const CoursesList: React.FC = () => {
         <PageHeader title="Course List" description="Manage and organize your courses." breadcrumbs={<Breadcrumb items={[{ label: 'Courses' }]} />} />
         <ErrorState
           title="Courses Load Failure"
-          message="Could not load academic course structures from the server."
+          message={errorMessage}
           onRetry={fetchCourses}
           retryLabel="Retry"
         />
+        <div className="flex justify-center mt-4">
+          <Button variant="secondary" size="sm" onClick={() => navigate('/institute-admin/login')}>
+            Sign In with Institute Admin Account
+          </Button>
+        </div>
       </div>
     );
   }
@@ -303,7 +321,7 @@ export const CoursesList: React.FC = () => {
         message={`Are you absolutely sure you want to delete course "${selectedCourse?.title}"? All mapped modules, books, and class materials may become orphaned. This action is irreversible.`}
         confirmLabel="Yes, Delete Course"
         cancelLabel="No, Keep It"
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleConfirmDelete}
         onClose={() => {
           setIsDeleteOpen(false);
           setSelectedCourse(null);

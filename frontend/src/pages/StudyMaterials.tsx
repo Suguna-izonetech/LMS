@@ -191,6 +191,18 @@ export const StudyMaterialsList: React.FC = () => {
       }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: filteredMaterials, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -258,66 +270,49 @@ export const StudyMaterialsList: React.FC = () => {
       </Card>
 
       {/* List items */}
-      {(() => {
-        const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-        } = usePagination({ data: filteredMaterials, itemsPerPage: 10 });
-
-        if (filteredMaterials.length === 0) {
-          return (
-            <EmptyState
-              title="No Resources Found"
-              description="You have not uploaded any study materials or recordings."
-              actionLabel="Upload Material"
-              onActionClick={openCreateForm}
-            />
-          );
-        }
-
-        return (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHeaderCell>Material Info</TableHeaderCell>
-                  <TableHeaderCell>Course Mapped</TableHeaderCell>
-                  <TableHeaderCell>Date Added</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map(m => (
+      {filteredMaterials.length === 0 ? (
+        <EmptyState
+          title="No Resources Found"
+          description="You have not uploaded any study materials or recordings."
+          actionLabel="Upload Material"
+          onActionClick={openCreateForm}
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Resource</TableHeaderCell>
+                <TableHeaderCell>Mapped Course</TableHeaderCell>
+                <TableHeaderCell>Type</TableHeaderCell>
+                <TableHeaderCell>Size / Ext</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map(m => (
                 <TableRow key={m.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-slate-950 border border-slate-850 text-indigo-400">
+                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-indigo-400">
                         {getIcon(m.material_type)}
                       </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-slate-200">{m.title}</span>
-                        <span className="text-xs text-slate-500">{m.material_type}</span>
+                        <span className="text-xs text-slate-500">{m.description || 'No description provided'}</span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-355 font-medium">
-                    {m.course_title || 'Unmapped'}
-                  </TableCell>
-                  <TableCell className="text-slate-400 font-medium">
-                    {new Date(m.created_at).toLocaleDateString()}
+                  <TableCell className="text-slate-400">
+                    {courses.find(c => c.id === m.course_id)?.title || 'General Resource'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={m.status === 'published' ? 'success' : 'warning'}>
-                      {m.status}
+                    <Badge variant={m.material_type === 'Video' ? 'warning' : 'info'}>
+                      {m.material_type}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-slate-400 text-xs">
+                    {m.visibility || 'Public'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -360,8 +355,7 @@ export const StudyMaterialsList: React.FC = () => {
             onPrev={prevPage}
           />
         </TableContainer>
-        );
-      })()}
+      )}
 
       {/* Delete confirm */}
       <ConfirmationDialog

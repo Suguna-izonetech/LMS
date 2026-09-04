@@ -55,7 +55,7 @@ class Permission(Base):
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=False)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(50), index=True, nullable=False)
     description = Column(String(255), nullable=True)
     
@@ -68,7 +68,7 @@ class Role(Base):
 
 class User(Base):
     __tablename__ = "users"
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True)
     institute = relationship("Institute")
     
     id = Column(Integer, primary_key=True, index=True)
@@ -121,7 +121,7 @@ course_books = Table(
 
 class Course(Base):
     __tablename__ = "courses"
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True)
     institute = relationship("Institute")
     
     id = Column(Integer, primary_key=True, index=True)
@@ -147,12 +147,12 @@ class Course(Base):
 
 class Batch(Base):
     __tablename__ = "batches"
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True)
     institute = relationship("Institute")
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(String(50), default="Active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
@@ -164,7 +164,7 @@ class Batch(Base):
 
 class Student(Base):
     __tablename__ = "students"
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True)
     institute = relationship("Institute")
     
     id = Column(Integer, primary_key=True, index=True)
@@ -180,13 +180,13 @@ class Student(Base):
 
 class LiveClass(Base):
     __tablename__ = "live_classes"
-    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True)
+    institute_id = Column(Integer, ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True)
     institute = relationship("Institute")
     
     id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
-    batch_id = Column(Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=False)
-    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    batch_id = Column(Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=False, index=True)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(150), nullable=False)
     description = Column(String(255), nullable=True)
     scheduled_date = Column(DateTime(timezone=True), nullable=False)
@@ -208,8 +208,8 @@ class LiveClassAttendance(Base):
     __tablename__ = "live_class_attendance"
     
     id = Column(Integer, primary_key=True, index=True)
-    live_class_id = Column(Integer, ForeignKey("live_classes.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    live_class_id = Column(Integer, ForeignKey("live_classes.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(String(50), nullable=False) # present, absent, late
     marked_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     marked_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -243,7 +243,7 @@ class StudyMaterial(Base):
     title = Column(String(150), nullable=False)
     description = Column(String(255), nullable=True)
     file_url = Column(String(255), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
     batch_id = Column(Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=True)
     material_type = Column(String(50), default="Notes") # Slides, Notes, Video, Syllabus
     visibility = Column(String(50), default="public") # public, private
@@ -263,7 +263,7 @@ class Quiz(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(150), nullable=False)
     description = Column(String(255), nullable=True)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
     batch_id = Column(Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=True)
     duration_minutes = Column(Integer, default=30)
     total_marks = Column(Integer, default=100)
@@ -305,8 +305,8 @@ class QuizAttempt(Base):
     __tablename__ = "quiz_attempts"
     
     id = Column(Integer, primary_key=True, index=True)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
     score = Column(Integer, default=0)
@@ -336,7 +336,7 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(150), nullable=False)
     description = Column(String(1000), nullable=True)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
     batch_id = Column(Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=True)
     teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     deadline = Column(DateTime(timezone=True), nullable=False)
@@ -364,8 +364,8 @@ class TaskSubmission(Base):
     __tablename__ = "task_submissions"
     
     id = Column(Integer, primary_key=True, index=True)
-    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
     file_url = Column(String(255), nullable=False)
     status = Column(String(50), default="pending") # pending, graded
@@ -655,6 +655,10 @@ class CertificateRecord(Base):
     issue_date = Column(DateTime, default=datetime.utcnow)
     certificate_number = Column(String, unique=True, index=True)
     status = Column(String, default="issued") # draft, issued, revoked
+    
+    student = relationship("Student")
+    course = relationship("Course")
+    template = relationship("CertificateTemplate")
 
 class Conversation(Base):
     __tablename__ = 'conversations'

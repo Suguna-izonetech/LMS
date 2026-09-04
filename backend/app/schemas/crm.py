@@ -20,10 +20,11 @@ class CRMFollowupResponse(CRMFollowupBase):
 
 class CRMLeadBase(BaseModel):
     name: str
-    email: str
-    phone: str
-    status: str
-    source: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    status: Optional[str] = "New"
+    source: Optional[str] = None
+    course_interest: Optional[str] = None
     assigned_staff_id: Optional[int] = None
 
 class CRMLeadCreate(CRMLeadBase):

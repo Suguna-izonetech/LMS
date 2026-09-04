@@ -191,6 +191,18 @@ export const ManageRoles: React.FC = () => {
   
   const groupedPerms = groupPermissions(allPermissions);
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: roles, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -226,20 +238,6 @@ export const ManageRoles: React.FC = () => {
 
       <Card>
         <CardContent className="p-0">
-        {(() => {
-          const {
-            paginatedData,
-            currentPage,
-            totalPages,
-            startIndex,
-            endIndex,
-            totalItems,
-            goToPage,
-            nextPage,
-            prevPage
-          } = usePagination({ data: roles, itemsPerPage: 10 });
-
-          return (
           <TableContainer>
             <Table>
               <TableHeader>
@@ -317,8 +315,6 @@ export const ManageRoles: React.FC = () => {
                 onPrev={prevPage}
             />
           </TableContainer>
-          );
-        })()}
         </CardContent>
       </Card>
 

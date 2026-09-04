@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Calendar, Plus, Users, Search, Link as LinkIcon, Play, FileText, CheckCircle } from 'lucide-react';
+import { Video, Calendar, Plus, Users, Search, Link as LinkIcon, Play, FileText, CheckCircle, XCircle } from 'lucide-react';
 import api from '../api/client';
 import {
   PageHeader,
@@ -263,6 +263,18 @@ export const LiveClassesList: React.FC = () => {
     }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: filteredClasses, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -278,9 +290,8 @@ export const LiveClassesList: React.FC = () => {
         <PageHeader title="Live Classes Scheduler" description="Manage real-time teaching classrooms." breadcrumbs={<Breadcrumb items={[{ label: 'Learning Manager' }, { label: 'Live Classes' }]} />} />
         <ErrorState
           title="Network Request Failed"
-          message="Could not load classes. Please verify configuration settings."
+          message="Failed to retrieve schedule sessions. Please check server connections and retry."
           onRetry={fetchData}
-          retryLabel="Retry Sync"
         />
       </div>
     );
@@ -290,8 +301,8 @@ export const LiveClassesList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Live Classes Console"
-          description="Coordinate live webinars and virtual lectures for your institute."
+          title="Virtual Classroom Scheduler"
+          description="Coordinate live audio/video lectures, auto-share links, and retain recording history."
           breadcrumbs={<Breadcrumb items={[{ label: 'Learning Manager' }, { label: 'Live Classes' }]} />}
           actions={
             <Button
@@ -306,7 +317,7 @@ export const LiveClassesList: React.FC = () => {
         />
       </div>
 
-      {/* Filter panel */}
+      {/* Filter / Search Bar */}
       <Card>
         <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 space-y-1.5 w-full">
@@ -322,163 +333,152 @@ export const LiveClassesList: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 w-full md:w-auto md:min-w-[280px]">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Course</label>
-              <Select value={courseFilter} onChange={e => setCourseFilter(e.target.value)}>
-                <option value="All">All Mapped Courses</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</label>
-              <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                <option value="All">All Statuses</option>
-                <option value="Scheduled">Scheduled</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Live">Live In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </Select>
-            </div>
+          <div className="space-y-1.5 w-full md:w-auto md:min-w-[180px]">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filter Course</label>
+            <Select
+              value={courseFilter}
+              onChange={e => setCourseFilter(e.target.value)}
+            >
+              <option value="All">All Courses</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.id.toString()}>{c.title}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-1.5 w-full md:w-auto md:min-w-[180px]">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</label>
+            <Select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              <option value="All">All Statuses</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {(() => {
-        const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-        } = usePagination({ data: filteredClasses, itemsPerPage: 10 });
-
-        if (filteredClasses.length === 0) {
-          return (
-            <EmptyState
-              title="No Sessions Scheduled"
-              description="There are no virtual lectures scheduled. Tap schedule to build a virtual classroom."
-              actionLabel="Schedule Session"
-              onActionClick={() => setIsScheduleOpen(true)}
-            />
-          );
-        }
-
-        return (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHeaderCell>Session Topic</TableHeaderCell>
-                  <TableHeaderCell>Course Mapped</TableHeaderCell>
-                  <TableHeaderCell>Schedule Date & Time</TableHeaderCell>
-                  <TableHeaderCell>Provider / Link</TableHeaderCell>
-                  <TableHeaderCell>Recording</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map(lc => {
-                  const formatTime = new Date(lc.scheduled_date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-                  return (
-                  <TableRow key={lc.id}>
-                    <TableCell className="font-semibold text-slate-200">{lc.title}</TableCell>
-                    <TableCell className="text-slate-400 font-medium">
-                        {lc.course_title}<br/>
-                        <span className="text-[10px] text-slate-500">{lc.batch_name}</span>
-                    </TableCell>
-                    <TableCell className="text-slate-300 font-medium">{formatTime}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col text-[11px] leading-tight">
-                        <span className="font-bold text-emerald-400 capitalize">{lc.meeting_provider}</span>
-                        {lc.meeting_link && (
-                            <a href={lc.meeting_link} target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline flex items-center gap-1 font-semibold mt-1">
-                                <LinkIcon className="h-3 w-3" /> Join Link
-                            </a>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {lc.recording_url ? (
-                        <a href={lc.recording_url} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline flex items-center gap-1 text-xs font-semibold">
-                          <CheckCircle className="h-3.5 w-3.5 fill-emerald-500/10" /> Shared
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-500 font-bold">Not Shared</span>
+      {filteredClasses.length === 0 ? (
+        <EmptyState
+          title="No Sessions Scheduled"
+          description="There are no virtual lectures scheduled. Tap schedule to build a virtual classroom."
+          actionLabel="Schedule Session"
+          onActionClick={() => setIsScheduleOpen(true)}
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Session Topic</TableHeaderCell>
+                <TableHeaderCell>Course Mapped</TableHeaderCell>
+                <TableHeaderCell>Schedule Date & Time</TableHeaderCell>
+                <TableHeaderCell>Provider / Link</TableHeaderCell>
+                <TableHeaderCell>Recording</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map(lc => {
+                const formatTime = new Date(lc.scheduled_date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                return (
+                <TableRow key={lc.id}>
+                  <TableCell className="font-semibold text-slate-200">{lc.title}</TableCell>
+                  <TableCell className="text-slate-400 font-medium">
+                      {lc.course_title}<br/>
+                      <span className="text-[10px] text-slate-500">{lc.batch_name}</span>
+                  </TableCell>
+                  <TableCell className="text-slate-300 font-medium">{formatTime}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col text-[11px] leading-tight">
+                      <span className="font-bold text-emerald-400 capitalize">{lc.meeting_provider}</span>
+                      {lc.meeting_link && (
+                          <a href={lc.meeting_link} target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline flex items-center gap-1 font-semibold mt-1">
+                              <LinkIcon className="h-3 w-3" /> Join Link
+                          </a>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={['Scheduled', 'upcoming'].includes(lc.status.toLowerCase()) ? 'info' : lc.status.toLowerCase() === 'live' ? 'warning' : lc.status.toLowerCase() === 'completed' ? 'success' : 'danger'}>
-                        {lc.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {['scheduled', 'upcoming'].includes(lc.status.toLowerCase()) && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            leftIcon={<Play className="h-3 w-3 fill-current" />}
-                            onClick={() => updateClassStatus(lc.id, 'Live')}
-                          >
-                            Go Live
-                          </Button>
-                        )}
-                        {['live', 'completed'].includes(lc.status.toLowerCase()) && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            leftIcon={<Users className="h-3 w-3" />}
-                            onClick={() => handleOpenAttendance(lc)}
-                          >
-                            Attendance
-                          </Button>
-                        )}
-                        {lc.status.toLowerCase() === 'completed' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            leftIcon={<FileText className="h-3 w-3" />}
-                            onClick={() => handleOpenRecording(lc)}
-                          >
-                            Recording
-                          </Button>
-                        )}
-                        {lc.status.toLowerCase() !== 'cancelled' && lc.status.toLowerCase() !== 'completed' && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => cancelClass(lc.id)}
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-                })}
-              </TableBody>
-            </Table>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              totalItems={totalItems}
-              onPageChange={goToPage}
-              onNext={nextPage}
-              onPrev={prevPage}
-            />
-          </TableContainer>
-        );
-      })()}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {lc.recording_url ? (
+                      <a href={lc.recording_url} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline flex items-center gap-1 text-xs font-semibold">
+                        <CheckCircle className="h-3.5 w-3.5 fill-emerald-500/10" /> Shared
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-500 font-bold">Not Shared</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={['Scheduled', 'upcoming'].includes(lc.status.toLowerCase()) ? 'info' : lc.status.toLowerCase() === 'live' ? 'warning' : lc.status.toLowerCase() === 'completed' ? 'success' : 'danger'}>
+                      {lc.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {['scheduled', 'upcoming'].includes(lc.status.toLowerCase()) && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          leftIcon={<Play className="h-3 w-3 fill-current" />}
+                          onClick={() => updateClassStatus(lc.id, 'Live')}
+                        >
+                          Go Live
+                        </Button>
+                      )}
+                      {['live', 'completed'].includes(lc.status.toLowerCase()) && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          leftIcon={<Users className="h-3 w-3" />}
+                          onClick={() => handleOpenAttendance(lc)}
+                        >
+                          Attendance
+                        </Button>
+                      )}
+                      {lc.status.toLowerCase() === 'completed' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<FileText className="h-3 w-3" />}
+                          onClick={() => handleOpenRecording(lc)}
+                        >
+                          Recording
+                        </Button>
+                      )}
+                      {lc.status.toLowerCase() !== 'cancelled' && lc.status.toLowerCase() !== 'completed' && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          leftIcon={<XCircle className="h-3 w-3" />}
+                          onClick={() => updateClassStatus(lc.id, 'Cancelled')}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+              })}
+            </TableBody>
+          </Table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            totalItems={totalItems}
+            onPageChange={goToPage}
+            onNext={nextPage}
+            onPrev={prevPage}
+          />
+        </TableContainer>
+      )}
 
       {/* Modal 1: Schedule Live Class */}
       <Modal

@@ -9,32 +9,35 @@
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-An enterprise-grade, multi-tenant **Learning Management System (LMS)** designed for educational institutes, academies, and online learning providers. **KITE LMS** equips administrators and educators with tools to manage courses, live classes, student performance, assessments, CRM leads, billing, workflows, and automated reporting.
+An enterprise-grade, multi-tenant **Learning Management System (LMS)** designed for educational institutes, academies, and online learning providers. **KITE LMS** separates responsibilities across **4 distinct login portals** (Platform Admin, Institute Admin, Teacher, Student) to manage courses, live interactive classes, student performance, assessments, CRM leads, billing, automated workflows, and certificates.
 
 ---
 
-## 🌟 Key Features
+## 🌟 4 Primary Login Portals
 
-### 🏢 Multi-Tenant & RBAC Architecture
-- **Institute Management**: Support for custom domains, subdomains, white-label branding, logos, and SEO metadata.
-- **Dynamic Role-Based Access Control (RBAC)**: Granular permission assignments across custom roles (e.g., Institute Admin, Teacher, Student, Manager).
+### 🛡️ 1. Platform Admin Portal (`Admin`)
+- **SaaS Ecosystem Oversight**: Platform-level health metrics, total institutes, cross-tenant user directory, and revenue analytics.
+- **Tenant Provisioning**: Onboard new institutes, assign custom subdomains/domains, and configure storage/seat quotas.
+- **Explore Plans & Add-ons**: Manage platform features (`OnDomain Custom Domains`, `iOS & Android Apps`, `WhatsApp Gateway`, `Zoom SDK`, `WordPress Connector`).
 
-### 👑 Institute Admin Portal
-- **Course & Curriculum Builder**: Create and configure courses, batches, pr-erecorded video modules, and syllabus structures.
-- **User & Student Administration**: Manage student enrollments, instructor assignments, and user profiles.
-- **CRM & Lead Management**: Capture, track, and convert prospective student leads with custom follow-ups.
-- **Consultation Booking System**: Manage consultation slots, bookings, and customer inquiries.
-- **Financial Suite**: Billing configuration, invoicing, transaction history, and subscription plans management.
-- **Automated Workflows & Integrations**: Configure event-driven action workflows and third-party tools.
-- **Certificates & Reports**: Generate completion certificates and inspect platform-wide audit analytics.
+### 👑 2. Institute Admin Portal (`InstituteAdmin`)
+- **Course & Curriculum Builder**: Create and configure courses, batches, pre-recorded video modules, and syllabus structures.
+- **CRM Lead Pipeline**: Capture leads (`New`, `Contacted`, `Follow-up`, `Converted`), assign staff, log call follow-ups, and convert leads to registered students with one click (`/crm/leads/{id}/enroll`).
+- **Automated Workflows Engine**: Configure trigger-action automation recipes (`Lead Created`, `Student Enrolled`, `Payment Received`) with execution log tracking and test simulation runners.
+- **Financial Suite & Certificates**: Configure GST billing, tax rates, invoice generation, and certificate templates.
 
-### 👩‍🏫 Teacher / Instructor Portal
-- **Instructor Dashboard**: Overview of assigned courses, total enrolled students, pending tasks, and scheduled live classes.
-- **Live Class Management**: Schedule live interactive sessions (Zoom, Google Meet, or Custom providers) and track student attendance.
-- **Assessments & Quizzes**: Interactive quiz creator with multiple question types, automated grading, and score tracking.
-- **Task & Assignment Hub**: Assign coursework, set submission deadlines, evaluate student submissions, and provide feedback.
-- **Digital Library & Study Materials**: Upload course notes, presentation slides, syllabus PDFs, and reference books.
-- **Communication Tools**: Real-time 1-on-1 chat, announcements newsfeed, and notification center.
+### 👩‍🏫 3. Teacher / Instructor Portal (`Teacher`)
+- **Instructor Dashboard**: Overview of assigned courses, total enrolled students, pending assignment grading, and today's live classes.
+- **Live Class Management**: Schedule live interactive sessions (Zoom, Google Meet, or Custom providers), track student attendance (`Present`, `Absent`, `Late`), and share session recordings.
+- **Assessments & Quizzes**: Build custom quizzes with multiple question types, automated answer checking, and score tracking.
+- **Task & Assignment Hub**: Post tasks, set submission deadlines, evaluate student solution files, and provide feedback.
+- **Digital Library**: Upload course handouts, slides, syllabus PDFs, and reference e-books.
+
+### 🎓 4. Student / Learner Portal (`Student`)
+- **Student Learning Dashboard**: Progress metrics across enrolled courses, today's live classes with instant **"Join Live Class"** buttons, pending tasks, active quizzes, and earned certificates.
+- **Interactive Class & Video Consumption**: Join scheduled virtual classes with one click and stream video lectures organized by module syllabus.
+- **Assessments & Submissions**: Attempt timed interactive quizzes with instant score calculation, and upload assignment solution files before deadlines.
+- **Certificates**: View and download official verified course completion certificates (`CERT-YYYYMMDD-XXXX`).
 
 ---
 
@@ -71,9 +74,9 @@ Learning-Management-System/
 │   │   ├── crud/            # Database access layer
 │   │   ├── db/              # Database session & engine configurations
 │   │   ├── models/          # SQLAlchemy domain models (all_models.py)
-│   │   ├── routers/         # API endpoints (auth, teacher, institute_admin)
-│   │   ├── schemas/         # Pydantic data schemas
-│   │   ├── services/        # Business logic services
+│   │   ├── routers/         # API endpoints (auth, institute_admin, teacher, student)
+│   │   ├── schemas/         # Pydantic data validation schemas
+│   │   ├── services/        # Business logic services (reports, workflows)
 │   │   └── main.py          # FastAPI main entrypoint & CORS middleware
 │   ├── alembic/             # Database migration scripts
 │   ├── uploads/             # Static uploaded files (documents, images)
@@ -86,12 +89,13 @@ Learning-Management-System/
     ├── public/              # Static public assets
     ├── src/
     │   ├── api/             # Axios API service instances & endpoints
-    │   ├── components/      # Reusable UI components & layouts
-    │   ├── context/         # Auth & global React Context providers
+    │   ├── components/      # Reusable UI components, tables, modals & layouts
+    │   ├── context/         # Auth & Toast global React Context providers
     │   ├── hooks/           # Custom React hooks
-    │   ├── pages/           # Admin & Teacher page views
-    │   │   └── teacher/     # Dedicated instructor views & submodules
-    │   ├── App.tsx          # Main Application router & guard routes
+    │   ├── pages/           # Admin & Teacher & Student page views
+    │   │   ├── student/     # Dedicated learner portal submodules
+    │   │   └── teacher/     # Dedicated instructor portal submodules
+    │   ├── App.tsx          # Main Application router & role guard routes
     │   ├── main.tsx         # React DOM root entrypoint
     │   └── index.css        # Global CSS & Tailwind imports
     ├── package.json         # NPM scripts and dependencies
@@ -138,16 +142,14 @@ Make sure you have the following installed on your machine:
 4. **Set up Environment Variables**:
    Create or edit the `.env` file in the `backend/` directory:
    ```env
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/kite_lms
-   # Note: For SQLite local development, you can use:
-   # DATABASE_URL=sqlite:///./test.db
+   DATABASE_URL=sqlite:///./test.db
    SECRET_KEY=your-super-secret-jwt-key
    ACCESS_TOKEN_EXPIRE_MINUTES=30
    REFRESH_TOKEN_EXPIRE_DAYS=7
    ```
 
 5. **Initialize and Seed Database**:
-   Populate the database with default schemas, permissions, roles, and sample data:
+   Populate the database with default schemas, permissions, roles, and sample data across all 4 logins:
    ```bash
    python seed.py
    ```
@@ -186,11 +188,12 @@ Make sure you have the following installed on your machine:
 
 After running `python seed.py`, the following default test accounts are available:
 
-| Role | Username / Email | Password | Access Level |
+| Role | Username / Email | Password | Primary Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Institute Admin** | `admin@kite.lms` (or `admin`) | `password123` | Full Institute Administration & Management |
-| **Teacher / Instructor** | `teacher@kite.lms` (or `teacher`) | `password123` | Course Management, Quizzes, Attendance, Live Classes |
-| **Student** | `student@kite.lms` (or `student`) | `password123` | Student Portal Access |
+| **Platform Admin** | `    ` (or `platform_admin`) | `password123` | Multi-Tenant Platform Administration & SaaS Add-ons |
+| **Institute Admin** | `instituteadmin@kite.lms` (or `institute_admin`) | `password123` | Institute Curriculum, CRM Pipeline, Workflows & Billing |
+| **Teacher / Instructor** | `teacher@kite.lms` (or `teacher`) | `password123` | Course Delivery, Live Classes, Quizzes & Attendance |
+| **Student** | `student@kite.lms` (or `student`) | `password123` | Student Learning Portal, Live Class Join, Quiz Attempts |
 
 ---
 
@@ -199,7 +202,7 @@ After running `python seed.py`, the following default test accounts are availabl
 | Command | Description |
 | :--- | :--- |
 | `npm run dev` | Launches Vite local development server with HMR. |
-| `npm run build` | Runs TypeScript type-checks and compiles production build files. |
+| `npm run build` | Runs TypeScript type-checks (`tsc -b`) and compiles production bundle. |
 | `npm run lint` | Runs `oxlint` for high-speed code linting. |
 | `npm run preview` | Serves the production build locally for verification. |
 
@@ -207,21 +210,31 @@ After running `python seed.py`, the following default test accounts are availabl
 
 ## 📡 API Endpoints Overview
 
-The backend exposes RESTful endpoints grouped by domain:
+The backend exposes RESTful endpoints grouped by domain under `/api`:
 
-- **Authentication (`/api`)**:
-  - `POST /api/login` — Authenticate user & issue JWT Access/Refresh tokens
-  - `POST /api/refresh` — Refresh expired access tokens
-- **Institute Admin (`/api/admin`)**:
-  - `/api/admin/courses` — CRUD operations for courses and batches
-  - `/api/admin/users` — Manage user roles, permissions, and accounts
-  - `/api/admin/leads` — Manage prospective student CRM leads
-  - `/api/admin/billing` — Invoices, transactions, and subscription plans
-- **Teacher Portal (`/teacher`)**:
-  - `/teacher/courses` — View assigned courses & modules
-  - `/teacher/live-classes` — Schedule and manage live interactive classes
-  - `/teacher/quizzes` — Create quizzes, questions, and view student scores
-  - `/teacher/attendance` — Mark and export class attendance records
+- **Authentication (`/api/auth`)**:
+  - `POST /api/auth/login` — Authenticate user & issue JWT Access/Refresh tokens
+  - `POST /api/auth/institute/login` — Authenticate Institute Admin user
+  - `POST /api/auth/refresh` — Refresh expired access tokens
+- **Institute Admin Portal (`/api/institute-admin`)**:
+  - `/api/institute-admin/courses` — CRUD operations for courses, batches, and modules
+  - `/api/institute-admin/users` — Manage user roles, permissions, and accounts
+  - `/api/institute-admin/crm/leads` — Manage prospective student CRM leads & follow-ups
+  - `POST /api/institute-admin/crm/leads/{id}/enroll` — Convert lead to enrolled student
+  - `/api/institute-admin/workflows` — CRUD, toggle status, and test trigger automated workflows
+  - `/api/institute-admin/billing` — Invoices, transactions, and GST billing configurations
+- **Teacher Portal (`/api/teacher`)**:
+  - `/api/teacher/courses` — View assigned courses & modules
+  - `/api/teacher/live-classes` — Schedule and conduct live interactive classes
+  - `/api/teacher/quizzes` — Build quizzes, questions, and view student scores
+  - `/api/teacher/attendance` — Mark and export class attendance records
+- **Student Portal (`/api/student`)**:
+  - `/api/student/dashboard` — Overview of enrolled courses, today's live classes, tasks, and certificates
+  - `/api/student/courses` — View enrolled courses, syllabus, and video modules
+  - `/api/student/live-classes` — View scheduled live classes & instant join meeting links
+  - `/api/student/quizzes` — View and attempt interactive timed quizzes
+  - `/api/student/tasks` — View task instructions & upload solution file submissions
+  - `/api/student/certificates` — Claim and download course completion certificates
 
 ---
 

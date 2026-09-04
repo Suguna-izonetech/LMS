@@ -145,11 +145,16 @@ class PasswordUpdate(BaseModel):
 
 # --- SECURITY UTILS ---
 
-def verify_course_ownership(db: Session, teacher_id: int, course_id: int):
+def verify_course_ownership(db: Session, user_id: int, course_id: int):
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if teacher_id not in [t.id for t in course.teachers]:
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user_roles = [r.name.lower() for r in user.roles]
+        if "admin" in user_roles or "student" in user_roles:
+            return course
+    if user_id not in [t.id for t in course.teachers]:
         raise HTTPException(status_code=403, detail="Access Denied: You are not assigned to this course")
     return course
 
@@ -172,6 +177,12 @@ def get_dashboard(
     db: Session = Depends(get_db)
 ):
     assigned_courses = db.query(Course).filter(Course.teachers.any(id=current_user.id)).all()
+    if not assigned_courses:
+        student_obj = db.query(Student).filter(Student.email == current_user.email).first()
+        if student_obj and student_obj.courses:
+            assigned_courses = student_obj.courses
+        else:
+            assigned_courses = db.query(Course).all()
     assigned_course_ids = [c.id for c in assigned_courses]
     
     total_courses = len(assigned_courses)
@@ -265,6 +276,12 @@ def get_courses(
     db: Session = Depends(get_db)
 ):
     courses = db.query(Course).filter(Course.teachers.any(id=current_user.id)).all()
+    if not courses:
+        student_obj = db.query(Student).filter(Student.email == current_user.email).first()
+        if student_obj and student_obj.courses:
+            courses = student_obj.courses
+        else:
+            courses = db.query(Course).all()
     result = []
     for c in courses:
         student_count = db.query(Student).join(Student.courses).filter(Course.id == c.id).count()

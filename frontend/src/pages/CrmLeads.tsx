@@ -225,6 +225,18 @@ export const CrmLeads: React.FC = () => {
     );
   }
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: filteredLeads, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -347,20 +359,7 @@ export const CrmLeads: React.FC = () => {
           actionLabel="Reset CRM filters"
           onActionClick={() => { setSearchQuery(''); setStatusFilter('All'); setSourceFilter('All'); }}
         />
-      ) : (() => {
-          const {
-            paginatedData,
-            currentPage,
-            totalPages,
-            startIndex,
-            endIndex,
-            totalItems,
-            goToPage,
-            nextPage,
-            prevPage
-          } = usePagination({ data: filteredLeads, itemsPerPage: 10 });
-
-          return (
+      ) : (
         <TableContainer>
           <Table>
             <TableHeader>
@@ -460,9 +459,7 @@ export const CrmLeads: React.FC = () => {
               onPrev={prevPage}
           />
         </TableContainer>
-          );
-        })()
-      }
+      )}
 
       {/* Modal 1: Lead Add/Edit Form */}
       <Modal

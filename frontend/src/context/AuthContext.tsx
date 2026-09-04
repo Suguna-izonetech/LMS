@@ -14,8 +14,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (usernameOrEmail: string, password: string) => Promise<void>;
-  instituteLogin: (usernameOrEmail: string, password: string, rememberMe?: boolean) => Promise<void>;
+  login: (usernameOrEmail: string, password: string) => Promise<User | null>;
+  instituteLogin: (usernameOrEmail: string, password: string, rememberMe?: boolean) => Promise<User | null>;
   logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (usernameOrEmail: string, password: string) => {
+  const login = async (usernameOrEmail: string, password: string): Promise<User | null> => {
     setIsLoading(true);
     try {
       const response = await api.post('/auth/login', {
@@ -61,13 +61,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { access_token, refresh_token } = response.data;
       localStorage.setItem('kite_token', access_token);
       localStorage.setItem('kite_refresh_token', refresh_token);
-      await fetchProfile();
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      const profileRes = await api.get('/auth/me');
+      setUser(profileRes.data);
+      return profileRes.data;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const instituteLogin = async (usernameOrEmail: string, password: string, rememberMe: boolean = false) => {
+  const instituteLogin = async (usernameOrEmail: string, password: string, rememberMe: boolean = false): Promise<User | null> => {
     setIsLoading(true);
     try {
       const response = await api.post('/auth/institute/login', {
@@ -82,7 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionStorage.setItem('kite_token', access_token);
         sessionStorage.setItem('kite_refresh_token', refresh_token);
       }
-      await fetchProfile();
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      const profileRes = await api.get('/auth/me');
+      setUser(profileRes.data);
+      return profileRes.data;
     } finally {
       setIsLoading(false);
     }

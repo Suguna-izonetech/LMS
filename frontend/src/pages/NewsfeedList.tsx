@@ -153,6 +153,33 @@ export const NewsfeedList: React.FC = () => {
       }
   };
 
+  const publishedPosts = posts.filter(p => p.status === 'Published');
+  const draftPosts = posts.filter(p => p.status === 'Draft');
+
+  const {
+    paginatedData: paginatedPublished,
+    currentPage: publishedPage,
+    totalPages: publishedTotalPages,
+    startIndex: publishedStartIndex,
+    endIndex: publishedEndIndex,
+    totalItems: publishedTotalItems,
+    goToPage: goToPublishedPage,
+    nextPage: nextPublishedPage,
+    prevPage: prevPublishedPage
+  } = usePagination({ data: publishedPosts, itemsPerPage: 6 });
+
+  const {
+    paginatedData: paginatedDrafts,
+    currentPage: draftsPage,
+    totalPages: draftsTotalPages,
+    startIndex: draftsStartIndex,
+    endIndex: draftsEndIndex,
+    totalItems: draftsTotalItems,
+    goToPage: goToDraftsPage,
+    nextPage: nextDraftsPage,
+    prevPage: prevDraftsPage
+  } = usePagination({ data: draftPosts, itemsPerPage: 6 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -170,20 +197,17 @@ export const NewsfeedList: React.FC = () => {
       </div>
     );
   }
-  
-  const publishedPosts = posts.filter(p => p.status === 'Published');
-  const draftPosts = posts.filter(p => p.status === 'Draft');
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Social Newsfeed"
-          description="Broadcast announcements, educational content, and community updates."
+          title="Community Newsfeed"
+          description="Broadcast campus announcements, share academic insights, and engage students."
           breadcrumbs={<Breadcrumb items={[{ label: 'Social Connect' }, { label: 'Newsfeed' }]} />}
           actions={
               <Button variant="primary" size="sm" onClick={() => openForm()} leftIcon={<PlusCircle className="w-4 h-4" />}>
-                  Create Post
+                  Create New Post
               </Button>
           }
         />
@@ -195,8 +219,8 @@ export const NewsfeedList: React.FC = () => {
               activeId={activeTab}
               onChange={(id) => setActiveTab(id as any)}
               items={[
-                  { id: 'published', label: `Published Feed (${publishedPosts.length})` },
-                  { id: 'drafts', label: `Drafts (${draftPosts.length})` }
+                  { id: 'published', label: `Published Updates (${publishedPosts.length})` },
+                  { id: 'drafts', label: `Drafts & Scheduling (${draftPosts.length})` }
               ]}
               className="w-full border-b border-slate-800 bg-slate-900/50 p-4 pb-0"
           />
@@ -205,21 +229,8 @@ export const NewsfeedList: React.FC = () => {
             {activeTab === 'published' && (
                 <>
                   {publishedPosts.length === 0 ? (
-                        <EmptyState title="No Published Posts" description="Your community newsfeed is empty." icon={<Rss className="w-12 h-12 text-slate-700" />} />
-                    ) : (() => {
-                          const {
-                            paginatedData: paginatedPublished,
-                            currentPage: publishedPage,
-                            totalPages: publishedTotalPages,
-                            startIndex: publishedStartIndex,
-                            endIndex: publishedEndIndex,
-                            totalItems: publishedTotalItems,
-                            goToPage: goToPublishedPage,
-                            nextPage: nextPublishedPage,
-                            prevPage: prevPublishedPage
-                          } = usePagination({ data: publishedPosts, itemsPerPage: 6 });
-
-                          return (
+                        <EmptyState title="No Feed Posts" description="Share an announcement or article to start interacting with students." icon={<MessageSquare className="w-12 h-12 text-slate-700" />} />
+                    ) : (
                         <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {paginatedPublished.map(p => (
@@ -279,30 +290,15 @@ export const NewsfeedList: React.FC = () => {
                             />
                           </div>
                         </>
-                          );
-                        })()
-                    }
-                        </>
                     )}
+                </>
+            )}
             
             {activeTab === 'drafts' && (
                 <>
                   {draftPosts.length === 0 ? (
                         <EmptyState title="No Drafts" description="You have no drafts waiting to be published." icon={<Edit2 className="w-12 h-12 text-slate-700" />} />
-                    ) : (() => {
-                          const {
-                            paginatedData: paginatedDrafts,
-                            currentPage: draftsPage,
-                            totalPages: draftsTotalPages,
-                            startIndex: draftsStartIndex,
-                            endIndex: draftsEndIndex,
-                            totalItems: draftsTotalItems,
-                            goToPage: goToDraftsPage,
-                            nextPage: nextDraftsPage,
-                            prevPage: prevDraftsPage
-                          } = usePagination({ data: draftPosts, itemsPerPage: 6 });
-
-                          return (
+                    ) : (
                         <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {paginatedDrafts.map(p => (
@@ -342,11 +338,9 @@ export const NewsfeedList: React.FC = () => {
                             />
                           </div>
                         </>
-                          );
-                        })()
-                    }
-                        </>
                     )}
+                </>
+            )}
           </div>
         </CardContent>
       </Card>

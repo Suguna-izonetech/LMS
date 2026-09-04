@@ -65,37 +65,64 @@ def seed_data():
             print(f"Created permission: {name}")
             
         # 2. Create roles
-        teacher_role = Role(name="teacher", description="Course Teacher", institute_id=institute.id)
+        admin_role = Role(name="admin", description="Platform Super Administrator", institute_id=institute.id)
         institute_admin_role = Role(name="InstituteAdmin", description="Institute Administrator", institute_id=institute.id)
+        teacher_role = Role(name="teacher", description="Course Teacher", institute_id=institute.id)
         student_role = Role(name="student", description="Student", institute_id=institute.id)
-        db.add(teacher_role)
-        db.add(institute_admin_role)
-        db.add(student_role)
+        db.add_all([admin_role, institute_admin_role, teacher_role, student_role])
         db.flush()
-        print("Created roles: teacher, InstituteAdmin, student")
+        print("Created roles: admin, InstituteAdmin, teacher, student")
         
-        # Link permissions to teacher and admin
+        # Link permissions to admin, institute admin, and teacher
         for perm in db_permissions.values():
-            teacher_role.permissions.append(perm)
+            admin_role.permissions.append(perm)
             institute_admin_role.permissions.append(perm)
+            teacher_role.permissions.append(perm)
         db.flush()
         
         # 3. Create users
         hashed_pwd = get_password_hash("password123")
         
-        # Admin user
-        admin_user = User(institute=institute, 
+        # 3.1 Platform Admin user (Unique Superadmin Account)
+        platform_admin_user = User(
+            institute=institute, 
+            username="platform_admin",
+            email="platformadmin@kite.lms",
+            hashed_password=hashed_pwd,
+            is_active=True,
+            phone="+1-555-0001"
+        )
+        platform_admin_user.roles.append(admin_role)
+        db.add(platform_admin_user)
+
+        # 3.2 Institute Admin user (Unique Institute Account)
+        institute_admin_user = User(
+            institute=institute, 
+            username="institute_admin",
+            email="instituteadmin@kite.lms",
+            hashed_password=hashed_pwd,
+            is_active=True,
+            phone="+1-555-0002"
+        )
+        institute_admin_user.roles.append(institute_admin_role)
+        db.add(institute_admin_user)
+
+        # 3.3 Default admin alias (for backward compatibility)
+        admin_user = User(
+            institute=institute, 
             username="admin",
             email="admin@kite.lms",
             hashed_password=hashed_pwd,
             is_active=True,
             phone="+1-555-9999"
         )
+        admin_user.roles.append(admin_role)
         admin_user.roles.append(institute_admin_role)
         db.add(admin_user)
         
-        # Teacher user
-        teacher_user = User(institute=institute, 
+        # 3.4 Teacher user
+        teacher_user = User(
+            institute=institute, 
             username="teacher",
             email="teacher@kite.lms",
             hashed_password=hashed_pwd,
@@ -105,8 +132,9 @@ def seed_data():
         teacher_user.roles.append(teacher_role)
         db.add(teacher_user)
         
-        # Another teacher (for testing boundaries)
-        other_teacher = User(institute=institute, 
+        # 3.5 Another teacher (for testing boundaries)
+        other_teacher = User(
+            institute=institute, 
             username="other_teacher",
             email="other@kite.lms",
             hashed_password=hashed_pwd,
@@ -116,8 +144,9 @@ def seed_data():
         other_teacher.roles.append(teacher_role)
         db.add(other_teacher)
         
-        # Student user
-        student_user_entity = User(institute=institute, 
+        # 3.6 Student user
+        student_user_entity = User(
+            institute=institute, 
             username="student",
             email="student@kite.lms",
             hashed_password=hashed_pwd,
@@ -128,7 +157,7 @@ def seed_data():
         db.add(student_user_entity)
         
         db.flush()
-        print("Created users: institute_admin, teacher, other_teacher, student")
+        print("Created users: platform_admin, institute_admin, admin (alias), teacher, other_teacher, student")
         
         # 4. Create courses
         course1 = Course(institute=institute, title="Advanced Web Engineering", code="CS-401", description="React, Node.js, and modern fullstack architectures.")

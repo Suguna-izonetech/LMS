@@ -1,6 +1,6 @@
 import json
 from sqlalchemy.orm import Session
-from app.models.all_models import Workflow, WorkflowExecutionLog, User, CourseEnrollment
+from app.models.all_models import Workflow, WorkflowExecutionLog, User, Student, Course
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class WorkflowEngine:
         for wf in workflows:
             try:
                 # 1. Evaluate conditions
-                conditions = json.loads(wf.conditions)
+                conditions = json.loads(wf.conditions) if wf.conditions else []
                 passed = True
                 for cond in conditions:
                     field = cond.get("field")
@@ -33,7 +33,7 @@ class WorkflowEngine:
                 
                 # 2. Execute actions
                 for action in wf.actions:
-                    WorkflowEngine._execute_action(db, action.action_type, json.loads(action.action_payload), payload)
+                    WorkflowEngine._execute_action(db, action.action_type, json.loads(action.action_payload) if action.action_payload else {}, payload)
                 
                 # 3. Log Success
                 log = WorkflowExecutionLog(
@@ -55,22 +55,16 @@ class WorkflowEngine:
 
     @staticmethod
     def _execute_action(db: Session, action_type: str, action_payload: dict, event_payload: dict):
-        if action_type == "Create Enrollment":
-            if "student_id" in event_payload and "course_id" in event_payload:
-                existing = db.query(CourseEnrollment).filter_by(
-                    student_id=event_payload["student_id"],
-                    course_id=event_payload["course_id"]
-                ).first()
-                if not existing:
-                    enroll = CourseEnrollment(
-                        student_id=event_payload["student_id"],
-                        course_id=event_payload["course_id"],
-                        status=action_payload.get("status", "active")
-                    )
-                    db.add(enroll)
+        if action_type in ("Create Enrollment", "Grant Course Access"):
+            student_id = event_payload.get("student_id")
+            course_id = event_payload.get("course_id")
+            if student_id and course_id:
+                student = db.query(Student).filter(Student.id == student_id).first()
+                course = db.query(Course).filter(Course.id == course_id).first()
+                if student and course and student not in course.students:
+                    course.students.append(student)
         elif action_type == "Send Email":
             print(f"Mock Action: Sending Email to student_id {event_payload.get('student_id')} using template {action_payload.get('template')}")
-        elif action_type == "Grant Course Access":
-            print("Mock Action: Granting course access")
         else:
-            print(f"Unsupported action type: {action_type}")
+            print(f"Workflow Action executed: {action_type}")
+

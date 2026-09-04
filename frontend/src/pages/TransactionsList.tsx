@@ -95,6 +95,18 @@ export const TransactionsList: React.FC = () => {
       return ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: transactions, itemsPerPage: 10 });
+
   if (uiState === 'loading' && transactions.length === 0) {
     return (
       <div className="space-y-6">
@@ -203,20 +215,7 @@ export const TransactionsList: React.FC = () => {
                   description="Your financial ledger is currently empty. This table will populate automatically once real payment integrations capture transactions."
                   icon={<CreditCard className="w-12 h-12 text-slate-700" />}
               />
-          ) : (() => {
-                const {
-                  paginatedData,
-                  currentPage,
-                  totalPages,
-                  startIndex,
-                  endIndex,
-                  totalItems,
-                  goToPage,
-                  nextPage,
-                  prevPage
-                } = usePagination({ data: transactions, itemsPerPage: 10 });
-
-                return (
+          ) : (
             <TableContainer>
               <Table>
                 <TableHeader>
@@ -287,9 +286,7 @@ export const TransactionsList: React.FC = () => {
                   onPrev={prevPage}
               />
             </TableContainer>
-                  );
-                })()
-            }
+          )}
         </CardContent>
       </Card>
 

@@ -50,6 +50,119 @@ interface Webinar {
   created_at: string;
 }
 
+interface WebinarTableProps {
+  data: Webinar[];
+  onEdit: (w: Webinar) => void;
+  onDelete: (w: Webinar) => void;
+}
+
+const WebinarTable: React.FC<WebinarTableProps> = ({ data, onEdit, onDelete }) => {
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data, itemsPerPage: 10 });
+
+  if (data.length === 0) {
+    return (
+      <div className="py-12 text-center text-slate-500">
+        No webinars match this category.
+      </div>
+    );
+  }
+  return (
+    <TableContainer>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHeaderCell>Webinar Topic</TableHeaderCell>
+            <TableHeaderCell>Speaker</TableHeaderCell>
+            <TableHeaderCell>Timing</TableHeaderCell>
+            <TableHeaderCell>Workspace</TableHeaderCell>
+            <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map(w => (
+            <TableRow key={w.id}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-slate-950 border border-slate-850 text-indigo-400">
+                    <Video className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-200">{w.title}</span>
+                    <span className="text-[10px] text-slate-500 max-w-[200px] truncate">{w.description}</span>
+                    <span className="text-xs text-indigo-400/80 mt-1">{w.course_title}</span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className="text-slate-300 font-medium text-sm">{w.speaker_name}</span>
+                  <span className="text-slate-500 text-[10px]">{w.speaker_details}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1 text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-slate-500" />
+                    <span className="text-xs font-medium">{new Date(w.scheduled_date).toLocaleDateString()}</span>
+                  </div>
+                  {w.start_time && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-slate-500" />
+                      <span className="text-xs font-medium">{new Date(w.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Badge variant={w.status === 'live' ? 'success' : w.status === 'upcoming' ? 'info' : 'neutral'}>
+                    {w.meeting_provider}
+                  </Badge>
+                  {w.meeting_url && w.status !== 'completed' && (
+                    <a href={w.meeting_url} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300">
+                      <Link className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1.5">
+                  <Button variant="secondary" size="sm" onClick={() => onEdit(w)}>
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => onDelete(w)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalItems}
+        onPageChange={goToPage}
+        onNext={nextPage}
+        onPrev={prevPage}
+      />
+    </TableContainer>
+  );
+};
+
 export const WebinarsList: React.FC = () => {
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -218,113 +331,6 @@ export const WebinarsList: React.FC = () => {
     } finally {
         setIsSubmitting(false);
     }
-  };
-  
-  const WebinarTable = ({ data, onEdit, onDelete }: { data: Webinar[], onEdit: (w: Webinar) => void, onDelete: (w: Webinar) => void }) => {
-      const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-      } = usePagination({ data, itemsPerPage: 10 });
-
-      if (data.length === 0) {
-          return (
-             <div className="py-12 text-center text-slate-500">
-                No webinars match this category.
-             </div>
-          );
-      }
-      return (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHeaderCell>Webinar Topic</TableHeaderCell>
-                <TableHeaderCell>Speaker</TableHeaderCell>
-                <TableHeaderCell>Timing</TableHeaderCell>
-                <TableHeaderCell>Workspace</TableHeaderCell>
-                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map(w => (
-                <TableRow key={w.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-slate-950 border border-slate-850 text-indigo-400">
-                        <Video className="h-4.5 w-4.5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">{w.title}</span>
-                        <span className="text-[10px] text-slate-500 max-w-[200px] truncate">{w.description}</span>
-                        <span className="text-xs text-indigo-400/80 mt-1">{w.course_title}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-slate-300 font-medium text-sm">{w.speaker_name}</span>
-                      <span className="text-slate-500 text-[10px]">{w.speaker_details}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                      <div className="flex flex-col gap-1 text-slate-300">
-                          <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3 h-3 text-slate-500" />
-                              <span className="text-xs font-medium">{new Date(w.scheduled_date).toLocaleDateString()}</span>
-                          </div>
-                          {w.start_time && (
-                              <div className="flex items-center gap-1.5">
-                                  <Clock className="w-3 h-3 text-slate-500" />
-                                  <span className="text-xs font-medium">{new Date(w.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                              </div>
-                          )}
-                      </div>
-                  </TableCell>
-                  <TableCell>
-                      <div className="flex items-center gap-2">
-                          <Badge variant={w.status === 'live' ? 'success' : w.status === 'upcoming' ? 'info' : 'neutral'}>
-                              {w.meeting_provider}
-                          </Badge>
-                          {w.meeting_url && w.status !== 'completed' && (
-                              <a href={w.meeting_url} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300">
-                                  <Link className="w-3.5 h-3.5" />
-                              </a>
-                          )}
-                      </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button variant="secondary" size="sm" onClick={() => onEdit(w)}>
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => onDelete(w)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            totalItems={totalItems}
-            onPageChange={goToPage}
-            onNext={nextPage}
-            onPrev={prevPage}
-          />
-        </TableContainer>
-      );
   };
 
   if (uiState === 'loading') {

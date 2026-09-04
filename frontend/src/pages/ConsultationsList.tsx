@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Edit2, Trash2, Users, IndianRupee, Clock, CalendarCheck, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Search, Edit2, Trash2, Users, IndianRupee, Clock, CalendarCheck, CheckCircle2, XCircle, Plus } from 'lucide-react';
 import api from '../api/client';
 import {
   PageHeader,
@@ -226,6 +226,30 @@ export const ConsultationsList: React.FC = () => {
       }
   };
 
+  const {
+      paginatedData: paginatedConsultations,
+      currentPage: consultationsPage,
+      totalPages: consultationsTotalPages,
+      startIndex: consultationsStartIndex,
+      endIndex: consultationsEndIndex,
+      totalItems: consultationsTotalItems,
+      goToPage: goToConsultationsPage,
+      nextPage: nextConsultationsPage,
+      prevPage: prevConsultationsPage
+  } = usePagination({ data: consultations, itemsPerPage: 10 });
+
+  const {
+      paginatedData: paginatedBookings,
+      currentPage: bookingsPage,
+      totalPages: bookingsTotalPages,
+      startIndex: bookingsStartIndex,
+      endIndex: bookingsEndIndex,
+      totalItems: bookingsTotalItems,
+      goToPage: goToBookingsPage,
+      nextPage: nextBookingsPage,
+      prevPage: prevBookingsPage
+  } = usePagination({ data: bookings, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -289,214 +313,173 @@ export const ConsultationsList: React.FC = () => {
         </Card>
       </div>
 
-      {(() => {
-          const ServicesTable = () => {
-              const {
-                  paginatedData,
-                  currentPage,
-                  totalPages,
-                  startIndex,
-                  endIndex,
-                  totalItems,
-                  goToPage,
-                  nextPage,
-                  prevPage
-              } = usePagination({ data: consultations, itemsPerPage: 10 });
+      <Card>
+        <CardContent className="p-0">
+          <Tabs
+              activeId={activeTab}
+              onChange={(id) => setActiveTab(id as any)}
+              items={[
+                  { id: 'services', label: `Offered Services (${consultations.length})` },
+                  { id: 'bookings', label: `Student Bookings (${bookings.length})` }
+              ]}
+              className="w-full border-b border-slate-800 bg-slate-900/50 p-4 pb-0"
+          />
 
-              return (
-                  <TableContainer>
-                    <Table>
-                          <TableHeader>
+          <div className="p-0">
+            {activeTab === 'services' && (
+              <TableContainer>
+                <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHeaderCell>Service & Consultant</TableHeaderCell>
+                          <TableHeaderCell>Duration & Pricing</TableHeaderCell>
+                          <TableHeaderCell>Available Slots</TableHeaderCell>
+                          <TableHeaderCell>Status</TableHeaderCell>
+                          <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {consultations.length === 0 ? (
                             <TableRow>
-                              <TableHeaderCell>Service & Consultant</TableHeaderCell>
-                              <TableHeaderCell>Duration & Pricing</TableHeaderCell>
-                              <TableHeaderCell>Available Slots</TableHeaderCell>
-                              <TableHeaderCell>Status</TableHeaderCell>
-                              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                    No services configured yet. Create one to get started!
+                                </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {consultations.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                        No consultation services defined yet.
-                                    </TableCell>
-                                </TableRow>
-                            ) : paginatedData.map(c => (
-                              <TableRow key={c.id}>
-                                <TableCell>
-                                  <div className="flex flex-col">
-                                    <span className="font-semibold text-slate-200">{c.title}</span>
-                                    <span className="text-[10px] text-slate-500 max-w-[200px] truncate">{c.description}</span>
-                                    <span className="text-xs text-indigo-400/80 mt-1">Host: {c.consultant_name}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex flex-col gap-1 text-slate-300">
-                                      <div className="flex items-center gap-1.5">
-                                          <Clock className="w-3 h-3 text-slate-500" />
-                                          <span className="text-xs font-medium">{c.duration_minutes} mins</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                          <IndianRupee className="w-3 h-3 text-slate-500" />
-                                          <span className="text-xs font-bold text-amber-400">₹{c.pricing.toFixed(2)}</span>
-                                      </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col gap-1.5">
-                                        <Badge variant="info">
-                                            {c.slots.filter(s => s.status === 'available').length} Available
-                                        </Badge>
-                                        <Badge variant="neutral">
-                                            {c.slots.filter(s => s.status === 'booked').length} Booked
-                                        </Badge>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={c.status === 'active' ? 'success' : 'warning'}>
-                                        {c.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    <Button variant="secondary" size="sm" onClick={() => openSlotForm(c)}>
-                                      Add Slot
-                                    </Button>
-                                    <Button variant="secondary" size="sm" onClick={() => openEditForm(c)}>
-                                      <Edit2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="danger" size="sm" onClick={() => { setSelectedConsultation(c); setIsDeleteOpen(true); }}>
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            startIndex={startIndex}
-                            endIndex={endIndex}
-                            totalItems={totalItems}
-                            onPageChange={goToPage}
-                            onNext={nextPage}
-                            onPrev={prevPage}
-                        />
-                      </TableContainer>
-              );
-          };
-
-          const BookingsTable = () => {
-              const {
-                  paginatedData,
-                  currentPage,
-                  totalPages,
-                  startIndex,
-                  endIndex,
-                  totalItems,
-                  goToPage,
-                  nextPage,
-                  prevPage
-              } = usePagination({ data: bookings, itemsPerPage: 10 });
-
-              return (
-                      <TableContainer>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHeaderCell>Student</TableHeaderCell>
-                              <TableHeaderCell>Service Booked</TableHeaderCell>
-                              <TableHeaderCell>Date & Time</TableHeaderCell>
-                              <TableHeaderCell>Payment</TableHeaderCell>
-                              <TableHeaderCell>Status</TableHeaderCell>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {bookings.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                        No student bookings yet.
-                                    </TableCell>
-                                </TableRow>
-                            ) : paginatedData.map(b => (
-                              <TableRow key={b.id}>
-                                <TableCell>
-                                  <div className="flex flex-col">
-                                    <span className="font-semibold text-slate-200">{b.student_name}</span>
-                                    <span className="text-xs text-slate-500">Booking #{b.id}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-slate-300 font-medium text-sm">
-                                    {b.consultation_title}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col gap-1 text-slate-300">
-                                      <span className="text-xs font-medium">{new Date(b.date).toLocaleDateString()}</span>
-                                      <span className="text-xs font-medium text-slate-500">{new Date(b.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col items-start gap-1">
-                                        <Badge variant={b.payment_status === 'paid' ? 'success' : 'warning'}>
-                                            {b.payment_status}
-                                        </Badge>
-                                        <span className="text-xs text-amber-400 font-bold">₹{b.amount_paid.toFixed(2)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    {b.booking_status === 'confirmed' ? (
-                                        <div className="flex items-center gap-1.5 text-emerald-400">
-                                            <CheckCircle2 className="w-4 h-4" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Confirmed</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1.5 text-rose-400">
-                                            <XCircle className="w-4 h-4" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Cancelled</span>
-                                        </div>
-                                    )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            startIndex={startIndex}
-                            endIndex={endIndex}
-                            totalItems={totalItems}
-                            onPageChange={goToPage}
-                            onNext={nextPage}
-                            onPrev={prevPage}
-                        />
-                      </TableContainer>
-              );
-          };
-
-          return (
-            <Card>
-                <CardContent className="p-0">
-                <Tabs
-                    activeId={activeTab}
-                    onChange={(id) => setActiveTab(id as any)}
-                    items={[
-                        { id: 'services', label: "Consultation Services" },
-                        { id: 'bookings', label: "Student Bookings & Revenue" }
-                    ]}
-                    className="w-full border-b border-slate-800 bg-slate-900/50 p-4 pb-0"
+                        ) : paginatedConsultations.map(c => (
+                          <TableRow key={c.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                                  <Users className="w-5 h-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-slate-200">{c.title}</span>
+                                  <span className="text-xs text-slate-500">{c.consultant_name}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-emerald-400">₹{c.pricing.toFixed(2)}</span>
+                                <span className="text-xs text-slate-500">{c.duration_minutes} Mins Duration</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="neutral" className="bg-slate-900 border-slate-700">
+                                {c.slots?.filter(s => s.status === 'available').length || 0} Slots Available
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {c.status === 'active' ? (
+                                <Badge variant="success">Active</Badge>
+                              ) : (
+                                <Badge variant="neutral">Draft</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button variant="secondary" size="sm" onClick={() => openSlotForm(c)} title="Add Booking Slots">
+                                  <Plus className="h-3.5 w-3.5 mr-1" /> Slot
+                                </Button>
+                                <Button variant="secondary" size="sm" onClick={() => openEditForm(c)}>
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="danger" size="sm" onClick={() => { setSelectedConsultation(c); setIsDeleteOpen(true); }}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                </Table>
+                <Pagination
+                    currentPage={consultationsPage}
+                    totalPages={consultationsTotalPages}
+                    startIndex={consultationsStartIndex}
+                    endIndex={consultationsEndIndex}
+                    totalItems={consultationsTotalItems}
+                    onPageChange={goToConsultationsPage}
+                    onNext={nextConsultationsPage}
+                    onPrev={prevConsultationsPage}
                 />
-                <div className="p-0">
-                    {activeTab === 'services' && <ServicesTable />}
-                    {activeTab === 'bookings' && <BookingsTable />}
-                </div>
-                </CardContent>
-            </Card>
-          );
-      })()}
+              </TableContainer>
+            )}
+
+            {activeTab === 'bookings' && (
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHeaderCell>Student</TableHeaderCell>
+                      <TableHeaderCell>Service Booked</TableHeaderCell>
+                      <TableHeaderCell>Date & Time</TableHeaderCell>
+                      <TableHeaderCell>Payment</TableHeaderCell>
+                      <TableHeaderCell>Status</TableHeaderCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bookings.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                No student bookings yet.
+                            </TableCell>
+                        </TableRow>
+                    ) : paginatedBookings.map(b => (
+                      <TableRow key={b.id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-slate-200">{b.student_name}</span>
+                            <span className="text-xs text-slate-500">Booking #{b.id}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-slate-300 font-medium text-sm">
+                            {b.consultation_title}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1 text-slate-300">
+                            <span className="text-xs font-medium">{new Date(b.date).toLocaleDateString()}</span>
+                            <span className="text-xs font-medium text-slate-500">{new Date(b.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-col items-start gap-1">
+                                <Badge variant={b.payment_status === 'paid' ? 'success' : 'warning'}>
+                                    {b.payment_status}
+                                </Badge>
+                                <span className="text-xs text-amber-400 font-bold">₹{b.amount_paid.toFixed(2)}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            {b.booking_status === 'confirmed' ? (
+                                <Badge variant="success" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                    <CheckCircle2 className="w-3 h-3 mr-1 inline" /> Confirmed
+                                </Badge>
+                            ) : (
+                                <Badge variant="danger" className="bg-rose-500/10 text-rose-400 border-rose-500/20">
+                                    <XCircle className="w-3 h-3 mr-1 inline" /> {b.booking_status}
+                                </Badge>
+                            )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Pagination
+                    currentPage={bookingsPage}
+                    totalPages={bookingsTotalPages}
+                    startIndex={bookingsStartIndex}
+                    endIndex={bookingsEndIndex}
+                    totalItems={bookingsTotalItems}
+                    onPageChange={goToBookingsPage}
+                    onNext={nextBookingsPage}
+                    onPrev={prevBookingsPage}
+                />
+              </TableContainer>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <ConfirmationDialog
         isOpen={isDeleteOpen}

@@ -8,7 +8,6 @@ import {
   LoadingState, ErrorState, Modal, Pagination
 } from '../components/ui';
 import { useToast } from '../context/ToastContext';
-import { usePagination } from '../hooks/usePagination';
 
 interface Integration {
   id?: number;

@@ -163,6 +163,18 @@ export const BooksList: React.FC = () => {
     }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: filteredBooks, itemsPerPage: 10 });
+
   if (uiState === 'loading') {
     return (
       <div className="space-y-6">
@@ -228,43 +240,26 @@ export const BooksList: React.FC = () => {
         </CardContent>
       </Card>
 
-      {(() => {
-        const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-        } = usePagination({ data: filteredBooks, itemsPerPage: 10 });
-
-        if (filteredBooks.length === 0) {
-          return (
-            <EmptyState
-              title="No Books Found"
-              description="Your library is currently empty or no books match your search."
-              actionLabel="Add E-Book"
-              onActionClick={openCreateForm}
-            />
-          );
-        }
-
-        return (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHeaderCell>Book Title & Author</TableHeaderCell>
-                  <TableHeaderCell>Date Added</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map(b => (
+      {filteredBooks.length === 0 ? (
+        <EmptyState
+          title="No Books Found"
+          description="Your library is currently empty or no books match your search."
+          actionLabel="Add E-Book"
+          onActionClick={openCreateForm}
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Book Title & Author</TableHeaderCell>
+                <TableHeaderCell>Date Added</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map(b => (
                 <TableRow key={b.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -326,8 +321,7 @@ export const BooksList: React.FC = () => {
             onPrev={prevPage}
           />
         </TableContainer>
-        );
-      })()}
+      )}
 
       {/* Delete confirm */}
       <ConfirmationDialog

@@ -39,6 +39,114 @@ interface UserData {
   created_at: string;
 }
 
+interface UserTableProps {
+  data: UserData[];
+  onToggleStatus: (id: number, currentStatus: boolean) => void;
+}
+
+const UserTable: React.FC<UserTableProps> = ({ data, onToggleStatus }) => {
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data, itemsPerPage: 10 });
+
+  if (data.length === 0) {
+    return (
+      <div className="py-12 text-center text-slate-500">
+        No users match this category.
+      </div>
+    );
+  }
+  return (
+    <TableContainer>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHeaderCell>User Details</TableHeaderCell>
+            <TableHeaderCell>Contact</TableHeaderCell>
+            <TableHeaderCell>Role</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map(u => (
+            <TableRow key={u.id}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
+                    {u.first_name?.[0] || 'U'}{u.last_name?.[0] || ''}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-200">{u.first_name} {u.last_name}</span>
+                    <span className="text-xs text-slate-500">Joined: {new Date(u.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1 text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="w-3 h-3 text-slate-500" />
+                    <span className="text-xs">{u.email}</span>
+                  </div>
+                  {u.phone && (
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-3 h-3 text-slate-500" />
+                      <span className="text-xs">{u.phone}</span>
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={u.role === 'student' ? 'info' : u.role === 'teacher' ? 'success' : 'neutral'}>
+                  {u.role.toUpperCase()}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {u.is_active ? (
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Active</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-rose-400">
+                    <XCircle className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Inactive</span>
+                  </div>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1.5">
+                  <Button variant="outline" size="sm" onClick={() => onToggleStatus(u.id, u.is_active)}>
+                    {u.is_active ? 'Deactivate' : 'Activate'}
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalItems}
+        onPageChange={goToPage}
+        onNext={nextPage}
+        onPrev={prevPage}
+      />
+    </TableContainer>
+  );
+};
+
 export const ManageUsers: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [uiState, setUiState] = useState<'normal' | 'loading' | 'empty' | 'error'>('loading');
@@ -185,109 +293,6 @@ export const ManageUsers: React.FC = () => {
       link.click();
       document.body.removeChild(link);
   };
-  
-  const UserTable = ({ data }: { data: UserData[] }) => {
-      const {
-          paginatedData,
-          currentPage,
-          totalPages,
-          startIndex,
-          endIndex,
-          totalItems,
-          goToPage,
-          nextPage,
-          prevPage
-      } = usePagination({ data, itemsPerPage: 10 });
-
-      if (data.length === 0) {
-          return (
-             <div className="py-12 text-center text-slate-500">
-                No users match this category.
-             </div>
-          );
-      }
-      return (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHeaderCell>User Details</TableHeaderCell>
-                <TableHeaderCell>Contact</TableHeaderCell>
-                <TableHeaderCell>Role</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map(u => (
-                <TableRow key={u.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                        {u.first_name[0]}{u.last_name[0]}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">{u.first_name} {u.last_name}</span>
-                        <span className="text-xs text-slate-500">Joined: {new Date(u.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 text-slate-300">
-                        <div className="flex items-center gap-1.5">
-                            <Mail className="w-3 h-3 text-slate-500" />
-                            <span className="text-xs">{u.email}</span>
-                        </div>
-                        {u.phone && (
-                            <div className="flex items-center gap-1.5">
-                                <Phone className="w-3 h-3 text-slate-500" />
-                                <span className="text-xs">{u.phone}</span>
-                            </div>
-                        )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                      <Badge variant={u.role === 'student' ? 'info' : u.role === 'teacher' ? 'success' : 'neutral'}>
-                          {u.role.toUpperCase()}
-                      </Badge>
-                  </TableCell>
-                  <TableCell>
-                      {u.is_active ? (
-                          <div className="flex items-center gap-1.5 text-emerald-400">
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span className="text-xs font-bold uppercase tracking-wider">Active</span>
-                          </div>
-                      ) : (
-                          <div className="flex items-center gap-1.5 text-rose-400">
-                              <XCircle className="w-4 h-4" />
-                              <span className="text-xs font-bold uppercase tracking-wider">Inactive</span>
-                          </div>
-                      )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button variant="outline" size="sm" onClick={() => handleToggleStatus(u.id, u.is_active)}>
-                        {u.is_active ? 'Deactivate' : 'Activate'}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            totalItems={totalItems}
-            onPageChange={goToPage}
-            onNext={nextPage}
-            onPrev={prevPage}
-          />
-        </TableContainer>
-      );
-  };
 
   if (uiState === 'loading') {
     return (
@@ -347,9 +352,9 @@ export const ManageUsers: React.FC = () => {
           </div>
           
           <div className="p-0">
-              {activeTab === 'students' && <UserTable data={students} />}
-              {activeTab === 'teachers' && <UserTable data={teachers} />}
-              {activeTab === 'admins' && <UserTable data={admins} />}
+              {activeTab === 'students' && <UserTable data={students} onToggleStatus={handleToggleStatus} />}
+              {activeTab === 'teachers' && <UserTable data={teachers} onToggleStatus={handleToggleStatus} />}
+              {activeTab === 'admins' && <UserTable data={admins} onToggleStatus={handleToggleStatus} />}
           </div>
         </CardContent>
       </Card>

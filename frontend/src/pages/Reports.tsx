@@ -72,6 +72,18 @@ export const Reports: React.FC = () => {
       }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: history, itemsPerPage: 10 });
+
   if (uiState === 'loading') return (
       <div className="space-y-6">
           <PageHeader title="Reports" description="Generate system reports." breadcrumbs={[]} />
@@ -159,20 +171,6 @@ export const Reports: React.FC = () => {
       {activeTab === 'history' && (
           <Card>
               <CardContent className="p-0">
-                  {(() => {
-                      const {
-                        paginatedData,
-                        currentPage,
-                        totalPages,
-                        startIndex,
-                        endIndex,
-                        totalItems,
-                        goToPage,
-                        nextPage,
-                        prevPage
-                      } = usePagination({ data: history, itemsPerPage: 10 });
-
-                      return (
                   <TableContainer>
                       <Table>
                           <TableHeader>
@@ -234,8 +232,6 @@ export const Reports: React.FC = () => {
                           onPrev={prevPage}
                       />
                   </TableContainer>
-                      );
-                  })()}
               </CardContent>
           </Card>
       )}

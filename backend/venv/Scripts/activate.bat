@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=D:\frontend teacher dashboard (Kite lms)\backend\venv
+set VIRTUAL_ENV=C:\LMS\Learning-Management-System\backend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

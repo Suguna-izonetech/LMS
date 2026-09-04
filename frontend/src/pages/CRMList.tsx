@@ -178,6 +178,18 @@ export const CRMList: React.FC = () => {
       }
   };
 
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    totalItems,
+    goToPage,
+    nextPage,
+    prevPage
+  } = usePagination({ data: leads, itemsPerPage: 10 });
+
   if (uiState === 'loading' && !stats) {
     return (
       <div className="space-y-6">
@@ -202,92 +214,92 @@ export const CRMList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Lead Management (CRM)"
-          description="Track incoming inquiries, assign staff, and convert leads into enrollments."
-          breadcrumbs={<Breadcrumb items={[{ label: 'Institute Manager' }, { label: 'CRM Leads' }]} />}
+          title="CRM & Leads Pipeline"
+          description="Track incoming student inquiries, assign counselors, and monitor conversion rates."
+          breadcrumbs={<Breadcrumb items={[{ label: 'Institute Manager' }, { label: 'CRM' }]} />}
           actions={
-              <Button variant="primary" size="sm" onClick={() => openLeadModal()} leftIcon={<UserPlus className="w-4 h-4" />}>
-                  New Lead
-              </Button>
+            <Button variant="primary" size="sm" onClick={() => openLeadModal()} leftIcon={<UserPlus className="w-4 h-4" />}>
+              Add New Lead
+            </Button>
           }
         />
       </div>
-      
-      {/* STATS DASHBOARD */}
-      {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <Users className="w-6 h-6 text-indigo-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{stats.total_leads}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Leads</p>
-                </CardContent>
-            </Card>
-            <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <PlusCircle className="w-6 h-6 text-emerald-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{stats.new_leads}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">New</p>
-                </CardContent>
-            </Card>
-            <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <Clock className="w-6 h-6 text-amber-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{stats.pending_followups}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pending Follow-ups</p>
-                </CardContent>
-            </Card>
-            <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <AlertCircle className="w-6 h-6 text-rose-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{stats.incomplete_leads}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Incomplete</p>
-                </CardContent>
-            </Card>
-            <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <CheckCircle className="w-6 h-6 text-blue-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{stats.converted_leads}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Converted</p>
-                </CardContent>
-            </Card>
-          </div>
-      )}
 
-      {/* FILTERS & TABLE */}
+      {/* STATS OVERVIEW */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Total Leads</p>
+              <p className="text-2xl font-bold text-slate-200">{stats?.total_leads || 0}</p>
+            </div>
+            <div className="p-3 bg-indigo-500/10 rounded-lg text-indigo-400"><Users className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Converted Students</p>
+              <p className="text-2xl font-bold text-emerald-400">{stats?.converted_leads || 0}</p>
+            </div>
+            <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400"><CheckCircle className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Pending Follow-ups</p>
+              <p className="text-2xl font-bold text-blue-400">{stats?.pending_followups || 0}</p>
+            </div>
+            <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><PhoneCall className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Incomplete Leads</p>
+              <p className="text-2xl font-bold text-rose-400">{stats?.incomplete_leads || 0}</p>
+            </div>
+            <div className="p-3 bg-rose-500/10 rounded-lg text-rose-400"><Clock className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* FILTER & SEARCH */}
       <Card>
-        <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-900/50">
-            <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <Input placeholder="Search name, phone, email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 space-y-1.5 w-full">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search Leads</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Input
+                placeholder="Search by name, email, or phone..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-                <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-full sm:w-48">
-                    <option value="All">All Statuses</option>
-                    <option value="New">New</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Incomplete">Incomplete</option>
-                    <option value="Converted">Converted</option>
-                </Select>
-            </div>
-        </div>
+          </div>
+          
+          <div className="space-y-1.5 w-full md:w-auto md:min-w-[160px]">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</label>
+            <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="All">All Statuses</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Incomplete">Incomplete</option>
+              <option value="Converted">Converted</option>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* LEADS TABLE */}
+      <Card>
         <CardContent className="p-0">
             {leads.length === 0 ? (
                 <EmptyState title="No Leads Found" description="Try adjusting your search or filters." icon={<Users className="w-12 h-12 text-slate-700" />} />
-            ) : (() => {
-                  const {
-                    paginatedData,
-                    currentPage,
-                    totalPages,
-                    startIndex,
-                    endIndex,
-                    totalItems,
-                    goToPage,
-                    nextPage,
-                    prevPage
-                  } = usePagination({ data: leads, itemsPerPage: 10 });
-
-                  return (
+            ) : (
                 <TableContainer>
                   <Table>
                     <TableHeader>
@@ -348,9 +360,7 @@ export const CRMList: React.FC = () => {
                       onPrev={prevPage}
                   />
                 </TableContainer>
-                  );
-                })()
-            }
+            )}
         </CardContent>
       </Card>
 

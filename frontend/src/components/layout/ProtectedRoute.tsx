@@ -21,18 +21,37 @@ export const ProtectedRoute: React.FC = () => {
   return <Outlet />;
 };
 
+export const PlatformAdminRouteGuard: React.FC = () => {
+  const { hasRole, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+        <LoadingState message="Checking admin privileges..." />
+      </div>
+    );
+  }
+
+  const isAuthorized = hasRole('admin') || hasRole('PlatformAdmin');
+
+  if (!isAuthorized) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
+};
+
 export const TeacherRouteGuard: React.FC = () => {
   const { hasRole, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
-        <LoadingState message="Checking permissions..." />
+        <LoadingState message="Checking teacher permissions..." />
       </div>
     );
   }
 
-  // Allow either Teacher or Admin roles
   const isAuthorized = hasRole('teacher') || hasRole('admin');
 
   if (!isAuthorized) {
@@ -48,13 +67,32 @@ export const InstituteAdminRouteGuard: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
-        <LoadingState message="Checking permissions..." />
+        <LoadingState message="Checking institute admin permissions..." />
       </div>
     );
   }
 
-  // Strict check for InstituteAdmin role
-  const isAuthorized = hasRole('InstituteAdmin');
+  const isAuthorized = hasRole('InstituteAdmin') || hasRole('admin') || hasRole('teacher');
+
+  if (!isAuthorized) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
+};
+
+export const StudentRouteGuard: React.FC = () => {
+  const { hasRole, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+        <LoadingState message="Checking student access..." />
+      </div>
+    );
+  }
+
+  const isAuthorized = hasRole('student') || hasRole('admin');
 
   if (!isAuthorized) {
     return <Navigate to="/unauthorized" replace />;

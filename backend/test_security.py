@@ -43,7 +43,7 @@ def test_security():
     db.commit()
     db.refresh(user_inst_1)
     
-    role_admin = Role(name="InstituteAdmin")
+    role_admin = Role(name="InstituteAdmin", institute_id=inst_1.id)
     db.add(role_admin)
     db.commit()
     user_inst_1.roles.append(role_admin)
