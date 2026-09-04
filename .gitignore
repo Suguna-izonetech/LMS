@@ -22,3 +22,11 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+frontend/node_modules/
+
+# Frontend build output
+dist/
+frontend/dist/
