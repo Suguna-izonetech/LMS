@@ -4,7 +4,10 @@ import api from '../api/client';
 export interface User {
   id: number;
   username: string;
+  name?: string;
   email: string;
+  phone?: string;
+  profile_image_url?: string | null;
   is_active: boolean;
   roles: Array<{ id: number; name: string; description?: string }>;
   permissions: string[];

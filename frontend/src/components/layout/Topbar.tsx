@@ -1,7 +1,8 @@
 import React from 'react';
-import { Bell, Menu, User, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Menu, User, ChevronDown, LogOut, Settings } from 'lucide-react';
 import { Dropdown } from '../ui/Dropdown';
-import { useLocation } from 'react-router-dom';
+import { NotificationDropdown } from './NotificationDropdown';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { User as UserType } from '../../context/AuthContext';
 
 export interface TopbarProps {
@@ -16,6 +17,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onLogout,
 }) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   
   // Basic breadcrumb / title generator based on route
   const getPageTitle = () => {
@@ -28,7 +30,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   const title = getPageTitle();
 
   const profileMenuItems = [
-    { label: 'Profile Settings', onClick: () => {}, icon: <Settings className="h-4 w-4 text-slate-400" /> },
+    { label: 'Profile Settings', onClick: () => navigate('/institute-admin/settings'), icon: <Settings className="h-4 w-4 text-slate-400" /> },
     { label: 'Sign Out', onClick: onLogout, icon: <LogOut className="h-4 w-4 text-rose-400" /> }
   ];
 
@@ -53,14 +55,8 @@ export const Topbar: React.FC<TopbarProps> = ({
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Notifications Button */}
-        <button
-          className="relative rounded-md p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 focus-ring"
-          aria-label="View notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500" />
-        </button>
+        {/* Notifications Dropdown */}
+        <NotificationDropdown colorScheme="emerald" role="institute_admin" />
 
         <div className="h-5 w-px bg-slate-900" />
 

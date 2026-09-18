@@ -48,9 +48,16 @@ def get_current_user(
 def require_role(role_name: str):
     def dependency(current_user: User = Depends(get_current_user)) -> User:
         user_roles = [r.name.lower() for r in current_user.roles]
+        admin_roles = {"admin", "platformadmin", "superadmin", "instituteadmin"}
+        if any(r in admin_roles for r in user_roles):
+            return current_user
+
         allowed = [role_name.lower()]
         if role_name.lower() == "teacher":
-            allowed.extend(["admin", "student"])
+            allowed.extend(["admin", "instituteadmin", "platformadmin", "superadmin", "student", "instructor", "faculty"])
+        elif role_name.lower() == "student":
+            allowed.extend(["admin", "instituteadmin", "platformadmin", "superadmin"])
+            
         if not any(r in user_roles for r in allowed):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -61,6 +68,11 @@ def require_role(role_name: str):
 
 def require_permission(permission_name: str):
     def dependency(current_user: User = Depends(get_current_user)) -> User:
+        user_roles = [r.name.lower() for r in current_user.roles]
+        admin_roles = {"admin", "platformadmin", "superadmin", "instituteadmin"}
+        if any(r in admin_roles for r in user_roles):
+            return current_user
+
         user_permissions = set()
         for role in current_user.roles:
             for perm in role.permissions:

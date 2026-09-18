@@ -18,6 +18,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Dropdown } from '../ui/Dropdown';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export const PlatformAdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -35,7 +36,7 @@ export const PlatformAdminLayout: React.FC = () => {
   const profileMenuItems = [
     {
       label: 'Platform Settings',
-      onClick: () => navigate('/institute-admin/settings'),
+      onClick: () => navigate('/admin/settings'),
       icon: <Settings className="h-4 w-4 text-slate-400" />
     },
     {
@@ -48,12 +49,12 @@ export const PlatformAdminLayout: React.FC = () => {
   const sidebarLinks = [
     { name: 'Platform Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Institutes Directory', path: '/admin/institutes', icon: Building },
-    { name: 'Platform Users', path: '/institute-admin/institute-manager/users', icon: Users },
-    { name: 'Global Roles & RBAC', path: '/institute-admin/institute-manager/roles', icon: Shield },
-    { name: 'Courses Oversight', path: '/institute-admin/courses', icon: BookOpen },
-    { name: 'Integrations & API', path: '/institute-admin/integrations/email', icon: Blocks },
-    { name: 'Explore Plans & Add-ons', path: '/institute-admin/explore-plans', icon: Sparkles },
-    { name: 'System Preferences', path: '/institute-admin/settings', icon: Settings },
+    { name: 'Platform Users', path: '/admin/users', icon: Users },
+    { name: 'Global Roles & RBAC', path: '/admin/roles', icon: Shield },
+    { name: 'Courses Oversight', path: '/admin/courses', icon: BookOpen },
+    { name: 'Integrations & API', path: '/admin/integrations', icon: Blocks },
+    { name: 'Explore Plans & Add-ons', path: '/admin/plans', icon: Sparkles },
+    { name: 'System Preferences', path: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -139,14 +140,7 @@ export const PlatformAdminLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/admin/dashboard')}
-              className="relative rounded-md p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 focus-ring cursor-pointer"
-              aria-label="View notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-indigo-500" />
-            </button>
+            <NotificationDropdown colorScheme="indigo" role="platform_admin" />
 
             <div className="h-5 w-px bg-slate-900" />
 

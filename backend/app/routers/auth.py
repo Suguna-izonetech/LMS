@@ -223,7 +223,10 @@ def get_me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "username": current_user.username,
+        "name": getattr(current_user, "name", None) or current_user.username,
         "email": current_user.email,
+        "phone": getattr(current_user, "phone", None),
+        "profile_image_url": getattr(current_user, "profile_image_url", None),
         "is_active": current_user.is_active,
         "institute_id": getattr(current_user, "institute_id", None),
         "roles": current_user.roles,

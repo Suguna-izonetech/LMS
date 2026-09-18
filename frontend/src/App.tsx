@@ -90,6 +90,7 @@ const StudentSettings = lazy(() => import('./pages/student/Settings'));
 // Platform Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminInstitutesList = lazy(() => import('./pages/admin/InstitutesList'));
+const AdminUsersList = lazy(() => import('./pages/admin/UsersList'));
 
 function App() {
   return (
@@ -256,6 +257,12 @@ function App() {
                       <Route element={<PlatformAdminLayout />}>
                         <Route path="/admin/dashboard" element={<AdminDashboard />} />
                         <Route path="/admin/institutes" element={<AdminInstitutesList />} />
+                        <Route path="/admin/users" element={<AdminUsersList />} />
+                        <Route path="/admin/roles" element={<ManageRoles />} />
+                        <Route path="/admin/courses" element={<CoursesList />} />
+                        <Route path="/admin/integrations" element={<Integrations />} />
+                        <Route path="/admin/plans" element={<ExplorePlans />} />
+                        <Route path="/admin/settings" element={<Settings />} />
                       </Route>
                     </Route>
                   </Route>

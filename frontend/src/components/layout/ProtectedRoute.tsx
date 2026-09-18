@@ -52,7 +52,11 @@ export const TeacherRouteGuard: React.FC = () => {
     );
   }
 
-  const isAuthorized = hasRole('teacher') || hasRole('admin');
+  const isAuthorized =
+    hasRole('teacher') ||
+    hasRole('admin') ||
+    hasRole('InstituteAdmin') ||
+    hasRole('platformadmin');
 
   if (!isAuthorized) {
     return <Navigate to="/unauthorized" replace />;
@@ -92,7 +96,11 @@ export const StudentRouteGuard: React.FC = () => {
     );
   }
 
-  const isAuthorized = hasRole('student') || hasRole('admin');
+  const isAuthorized =
+    hasRole('student') ||
+    hasRole('admin') ||
+    hasRole('InstituteAdmin') ||
+    hasRole('platformadmin');
 
   if (!isAuthorized) {
     return <Navigate to="/unauthorized" replace />;

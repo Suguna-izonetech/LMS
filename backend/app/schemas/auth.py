@@ -31,7 +31,10 @@ class RoleResponse(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    name: Optional[str] = None
     email: str
+    phone: Optional[str] = None
+    profile_image_url: Optional[str] = None
     is_active: bool
     institute_id: Optional[int] = None
     roles: List[RoleResponse] = []

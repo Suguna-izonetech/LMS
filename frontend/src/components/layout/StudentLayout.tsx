@@ -20,6 +20,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { Dropdown } from '../ui/Dropdown';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export const StudentLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -225,14 +226,7 @@ export const StudentLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/student/dashboard')}
-              className="relative rounded-md p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 focus-ring cursor-pointer"
-              aria-label="View notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-sky-500" />
-            </button>
+            <NotificationDropdown colorScheme="sky" role="student" />
 
             <div className="h-5 w-px bg-slate-900" />
 

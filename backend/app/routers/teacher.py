@@ -152,7 +152,7 @@ def verify_course_ownership(db: Session, user_id: int, course_id: int):
     user = db.query(User).filter(User.id == user_id).first()
     if user:
         user_roles = [r.name.lower() for r in user.roles]
-        if "admin" in user_roles or "student" in user_roles:
+        if any(r in {"admin", "platformadmin", "superadmin", "instituteadmin", "student"} for r in user_roles):
             return course
     if user_id not in [t.id for t in course.teachers]:
         raise HTTPException(status_code=403, detail="Access Denied: You are not assigned to this course")

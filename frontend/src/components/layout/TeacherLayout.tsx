@@ -20,6 +20,7 @@ import {
   User
 } from 'lucide-react';
 import { Dropdown } from '../ui/Dropdown';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export const TeacherLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -220,15 +221,7 @@ export const TeacherLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notification Button */}
-            <button
-              onClick={() => navigate('/teacher/notifications')}
-              className="relative rounded-md p-2 text-slate-400 hover:bg-slate-900 hover:text-slate-200 focus-ring cursor-pointer"
-              aria-label="View notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-violet-500" />
-            </button>
+            <NotificationDropdown colorScheme="violet" role="teacher" />
 
             <div className="h-5 w-px bg-slate-900" />
 

@@ -141,7 +141,7 @@ export const AdminDashboard: React.FC = () => {
               </Button>
 
               <Button
-                onClick={() => navigate('/institute-admin/institute-manager/users')}
+                onClick={() => navigate('/admin/users')}
                 className="w-full justify-between bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 cursor-pointer"
               >
                 <span>Platform Users & RBAC</span>
@@ -149,7 +149,7 @@ export const AdminDashboard: React.FC = () => {
               </Button>
 
               <Button
-                onClick={() => navigate('/institute-admin/explore-plans')}
+                onClick={() => navigate('/admin/plans')}
                 className="w-full justify-between bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 cursor-pointer"
               >
                 <span>Plans & Add-ons</span>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User as UserIcon, Building, Monitor, MessageSquare, Shield, Save, Upload, CheckCircle, MapPin
+  User as UserIcon, Building, Monitor, MessageSquare, Shield, Save, MapPin
 } from 'lucide-react';
 import api from '../api/client';
 import {
-  PageHeader, Breadcrumb, Card, CardContent, Button, Input, LoadingState, Badge
+  PageHeader, Breadcrumb, Card, CardContent, Button, Input, LoadingState
 } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 
@@ -21,7 +21,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
   const { success, error: showError } = useToast();
 
   // My Profile
-  const [myProfile, setMyProfile] = useState<any>({ name: '', email: '', phone: '', profile_image_url: null });
+  const [myProfile, setMyProfile] = useState<any>({ name: '', email: '', phone: '', role: '', profile_image_url: null });
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
   // Institute Profile
@@ -40,9 +40,17 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
               api.get('/institute-admin/institute/profile'),
               api.get('/institute-admin/institute/settings')
           ]);
-          setMyProfile(meRes.data.user);
-          setInstProfile(instRes.data);
-          setSettings(setRes.data);
+          const userData = meRes.data?.user || meRes.data || {};
+          setMyProfile({
+              name: userData.name || userData.username || '',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              role: (userData.roles && userData.roles[0]?.name) || userData.role || 'Institute Admin',
+              profile_image_url: userData.profile_image_url || null,
+              ...userData
+          });
+          setInstProfile(instRes.data || {});
+          setSettings(setRes.data || {});
           setUiState('normal');
       } catch (err) {
           console.error(err);
@@ -60,9 +68,9 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
       setIsSaving(true);
       try {
           const fd = new FormData();
-          fd.append('name', myProfile.name);
-          fd.append('email', myProfile.email);
-          if (myProfile.phone) fd.append('phone', myProfile.phone);
+          fd.append('name', myProfile?.name || '');
+          fd.append('email', myProfile?.email || '');
+          if (myProfile?.phone) fd.append('phone', myProfile.phone);
           if (profileImageFile) fd.append('profile_image', profileImageFile);
           
           await api.put('/institute-admin/profile', fd);
@@ -81,15 +89,15 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
       try {
           const fd = new FormData();
           fd.append('data', JSON.stringify({
-              name: instProfile.name,
-              about_text: instProfile.about_text,
-              phone: instProfile.phone,
-              email: instProfile.email,
-              address: instProfile.address,
-              google_maps_link: instProfile.google_maps_link,
-              youtube_link: instProfile.youtube_link,
-              subdomain: instProfile.subdomain,
-              custom_domain: instProfile.custom_domain
+              name: instProfile?.name || '',
+              about_text: instProfile?.about_text || '',
+              phone: instProfile?.phone || '',
+              email: instProfile?.email || '',
+              address: instProfile?.address || '',
+              google_maps_link: instProfile?.google_maps_link || '',
+              youtube_link: instProfile?.youtube_link || '',
+              subdomain: instProfile?.subdomain || '',
+              custom_domain: instProfile?.custom_domain || ''
           }));
           if (logoFile) fd.append('logo', logoFile);
           if (bannerFile) fd.append('banner', bannerFile);
@@ -108,7 +116,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
       e.preventDefault();
       setIsSaving(true);
       try {
-          await api.put('/institute-admin/institute/settings', settings);
+          await api.put('/institute-admin/institute/settings', settings || {});
           success('Settings updated successfully');
           fetchData();
       } catch (e) {
@@ -119,7 +127,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
   };
 
   const handleSettingToggle = (key: string) => {
-      setSettings({ ...settings, [key]: !settings[key] });
+      setSettings((prev: any) => ({ ...prev, [key]: !prev?.[key] }));
   };
 
   if (uiState === 'loading') return (
@@ -186,7 +194,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                   <CardContent className="p-6 space-y-6">
                       <div className="flex items-center gap-6">
                           <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700 overflow-hidden flex items-center justify-center">
-                              {myProfile.profile_image_url ? (
+                              {myProfile?.profile_image_url ? (
                                   <img src={`http://localhost:8000${myProfile.profile_image_url}`} alt="Profile" className="w-full h-full object-cover" />
                               ) : (
                                   <UserIcon className="w-8 h-8 text-slate-500" />
@@ -202,19 +210,19 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                       <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Full Name</label>
-                              <Input value={myProfile.name} onChange={e => setMyProfile({...myProfile, name: e.target.value})} required />
+                              <Input value={myProfile?.name || ''} onChange={e => setMyProfile({...myProfile, name: e.target.value})} required />
                           </div>
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Email Address (Requires Re-verification on change)</label>
-                              <Input type="email" value={myProfile.email} onChange={e => setMyProfile({...myProfile, email: e.target.value})} required />
+                              <Input type="email" value={myProfile?.email || ''} onChange={e => setMyProfile({...myProfile, email: e.target.value})} required />
                           </div>
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Phone Number</label>
-                              <Input value={myProfile.phone || ''} onChange={e => setMyProfile({...myProfile, phone: e.target.value})} />
+                              <Input value={myProfile?.phone || ''} onChange={e => setMyProfile({...myProfile, phone: e.target.value})} />
                           </div>
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Role</label>
-                              <Input value={myProfile.role} disabled className="opacity-50" />
+                              <Input value={myProfile?.role || 'Institute Admin'} disabled className="opacity-50" />
                           </div>
                       </div>
                   </CardContent>
@@ -235,16 +243,16 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                           <div>
                               <h3 className="text-sm font-bold text-slate-200 mb-2">Institute Logo</h3>
                               <div className="h-24 bg-slate-900 border border-slate-700 rounded-lg flex items-center justify-center overflow-hidden mb-2 relative">
-                                  {instProfile.logo_url && <img src={`http://localhost:8000${instProfile.logo_url}`} className="h-full object-contain" alt="Logo" />}
-                                  {!instProfile.logo_url && <span className="text-slate-500 text-sm">No Logo Uploaded</span>}
+                                  {instProfile?.logo_url && <img src={`http://localhost:8000${instProfile.logo_url}`} className="h-full object-contain" alt="Logo" />}
+                                  {!instProfile?.logo_url && <span className="text-slate-500 text-sm">No Logo Uploaded</span>}
                               </div>
                               <input type="file" className="text-xs text-slate-400" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
                           </div>
                           <div>
                               <h3 className="text-sm font-bold text-slate-200 mb-2">Banner Image</h3>
                               <div className="h-24 bg-slate-900 border border-slate-700 rounded-lg flex items-center justify-center overflow-hidden mb-2 relative">
-                                  {instProfile.banner_url && <img src={`http://localhost:8000${instProfile.banner_url}`} className="w-full h-full object-cover" alt="Banner" />}
-                                  {!instProfile.banner_url && <span className="text-slate-500 text-sm">No Banner Uploaded</span>}
+                                  {instProfile?.banner_url && <img src={`http://localhost:8000${instProfile.banner_url}`} className="w-full h-full object-cover" alt="Banner" />}
+                                  {!instProfile?.banner_url && <span className="text-slate-500 text-sm">No Banner Uploaded</span>}
                               </div>
                               <input type="file" className="text-xs text-slate-400" onChange={e => setBannerFile(e.target.files?.[0] || null)} />
                           </div>
@@ -252,7 +260,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
 
                       <div className="space-y-1">
                           <label className="text-xs font-semibold text-slate-400">Institute Name</label>
-                          <Input value={instProfile.name} onChange={e => setInstProfile({...instProfile, name: e.target.value})} required />
+                          <Input value={instProfile?.name || ''} onChange={e => setInstProfile({...instProfile, name: e.target.value})} required />
                       </div>
                       
                       <div className="space-y-1">
@@ -260,7 +268,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                           <textarea 
                               className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-300"
                               rows={4}
-                              value={instProfile.about_text || ''}
+                              value={instProfile?.about_text || ''}
                               onChange={e => setInstProfile({...instProfile, about_text: e.target.value})}
                           />
                       </div>
@@ -268,19 +276,19 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                       <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Contact Email</label>
-                              <Input value={instProfile.email || ''} onChange={e => setInstProfile({...instProfile, email: e.target.value})} />
+                              <Input value={instProfile?.email || ''} onChange={e => setInstProfile({...instProfile, email: e.target.value})} />
                           </div>
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Contact Phone</label>
-                              <Input value={instProfile.phone || ''} onChange={e => setInstProfile({...instProfile, phone: e.target.value})} />
+                              <Input value={instProfile?.phone || ''} onChange={e => setInstProfile({...instProfile, phone: e.target.value})} />
                           </div>
                           <div className="space-y-1 col-span-2">
                               <label className="text-xs font-semibold text-slate-400">Physical Address</label>
-                              <Input value={instProfile.address || ''} onChange={e => setInstProfile({...instProfile, address: e.target.value})} />
+                              <Input value={instProfile?.address || ''} onChange={e => setInstProfile({...instProfile, address: e.target.value})} />
                           </div>
                           <div className="space-y-1 col-span-2">
                               <label className="text-xs font-semibold text-slate-400 flex items-center gap-1"><MapPin className="w-3 h-3"/> Google Maps URL</label>
-                              <Input value={instProfile.google_maps_link || ''} onChange={e => setInstProfile({...instProfile, google_maps_link: e.target.value})} placeholder="https://maps.google.com/..." />
+                              <Input value={instProfile?.google_maps_link || ''} onChange={e => setInstProfile({...instProfile, google_maps_link: e.target.value})} placeholder="https://maps.google.com/..." />
                           </div>
                       </div>
                       
@@ -291,7 +299,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-700 bg-slate-800 text-slate-400 sm:text-sm">
                                       https://
                                   </span>
-                                  <input type="text" value={instProfile.subdomain || ''} onChange={e => setInstProfile({...instProfile, subdomain: e.target.value})} className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md bg-slate-950 border border-slate-800 text-sm text-slate-200" />
+                                  <input type="text" value={instProfile?.subdomain || ''} onChange={e => setInstProfile({...instProfile, subdomain: e.target.value})} className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md bg-slate-950 border border-slate-800 text-sm text-slate-200" />
                                   <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-700 bg-slate-800 text-slate-400 sm:text-sm">
                                       .kitelms.com
                                   </span>
@@ -299,7 +307,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                           </div>
                           <div className="space-y-1">
                               <label className="text-xs font-semibold text-slate-400">Custom Domain (Requires Plan Add-on)</label>
-                              <Input value={instProfile.custom_domain || ''} onChange={e => setInstProfile({...instProfile, custom_domain: e.target.value})} placeholder="academy.yourbrand.com" />
+                              <Input value={instProfile?.custom_domain || ''} onChange={e => setInstProfile({...instProfile, custom_domain: e.target.value})} placeholder="academy.yourbrand.com" />
                           </div>
                       </div>
                   </CardContent>
@@ -324,7 +332,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                                   <div className="space-y-1">
                                       <label className="text-xs font-semibold text-slate-400">Time Zone</label>
                                       <select 
-                                          value={settings.time_zone} 
+                                          value={settings?.time_zone || 'Asia/Kolkata'} 
                                           onChange={e => setSettings({...settings, time_zone: e.target.value})}
                                           className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-300"
                                       >
@@ -335,20 +343,20 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                                   </div>
                                   <div className="space-y-1">
                                       <label className="text-xs font-semibold text-slate-400">Country</label>
-                                      <Input value={settings.country} onChange={e => setSettings({...settings, country: e.target.value})} />
+                                      <Input value={settings?.country || ''} onChange={e => setSettings({...settings, country: e.target.value})} />
                                   </div>
                                   <div className="space-y-1">
                                       <label className="text-xs font-semibold text-slate-400">Minimum Attendance % Required</label>
-                                      <Input type="number" value={settings.min_attendance_percentage} onChange={e => setSettings({...settings, min_attendance_percentage: parseInt(e.target.value)})} />
+                                      <Input type="number" value={settings?.min_attendance_percentage ?? 75} onChange={e => setSettings({...settings, min_attendance_percentage: parseInt(e.target.value) || 0})} />
                                   </div>
                               </div>
                               <div className="space-y-4 pt-4 border-t border-slate-800">
                                   <label className="flex items-center gap-3 cursor-pointer">
-                                      <input type="checkbox" checked={settings.share_zoom_recordings} onChange={() => handleSettingToggle('share_zoom_recordings')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                      <input type="checkbox" checked={!!settings?.share_zoom_recordings} onChange={() => handleSettingToggle('share_zoom_recordings')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                       <span className="text-sm font-medium text-slate-300">Share Zoom Recordings with Students automatically</span>
                                   </label>
                                   <label className="flex items-center gap-3 cursor-pointer">
-                                      <input type="checkbox" checked={settings.enable_student_feedback} onChange={() => handleSettingToggle('enable_student_feedback')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                      <input type="checkbox" checked={!!settings?.enable_student_feedback} onChange={() => handleSettingToggle('enable_student_feedback')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                       <span className="text-sm font-medium text-slate-300">Enable Student Feedback and Ratings for Courses</span>
                                   </label>
                               </div>
@@ -358,23 +366,23 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                       {activeTab === 'social_connect' && (
                           <div className="space-y-4">
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.chat_enabled} onChange={() => handleSettingToggle('chat_enabled')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.chat_enabled} onChange={() => handleSettingToggle('chat_enabled')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Enable 1:1 Chat Platform-wide</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.disappearing_chats_enabled} onChange={() => handleSettingToggle('disappearing_chats_enabled')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.disappearing_chats_enabled} onChange={() => handleSettingToggle('disappearing_chats_enabled')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Enable Disappearing Chats (24h auto-delete)</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.allow_message_deletion} onChange={() => handleSettingToggle('allow_message_deletion')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.allow_message_deletion} onChange={() => handleSettingToggle('allow_message_deletion')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Allow Users to Delete Sent Messages</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.allow_student_posts} onChange={() => handleSettingToggle('allow_student_posts')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.allow_student_posts} onChange={() => handleSettingToggle('allow_student_posts')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Allow Students to Create Newsfeed Posts</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.allow_student_comments} onChange={() => handleSettingToggle('allow_student_comments')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.allow_student_comments} onChange={() => handleSettingToggle('allow_student_comments')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Allow Students to Comment on Newsfeed</span>
                               </label>
                           </div>
@@ -383,31 +391,31 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                       {activeTab === 'security' && (
                           <div className="space-y-4">
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.hide_student_info_from_teachers} onChange={() => handleSettingToggle('hide_student_info_from_teachers')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.hide_student_info_from_teachers} onChange={() => handleSettingToggle('hide_student_info_from_teachers')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Hide Student Contact Information from Teachers</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.restrict_teacher_content_visibility} onChange={() => handleSettingToggle('restrict_teacher_content_visibility')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.restrict_teacher_content_visibility} onChange={() => handleSettingToggle('restrict_teacher_content_visibility')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Restrict Teachers to View Only Their Assigned Content</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.allow_study_material_download} onChange={() => handleSettingToggle('allow_study_material_download')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.allow_study_material_download} onChange={() => handleSettingToggle('allow_study_material_download')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Allow Students to Download Study Materials</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.allow_book_download} onChange={() => handleSettingToggle('allow_book_download')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.allow_book_download} onChange={() => handleSettingToggle('allow_book_download')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Allow Students to Download E-Books (Offline Access)</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.require_live_class_approval} onChange={() => handleSettingToggle('require_live_class_approval')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.require_live_class_approval} onChange={() => handleSettingToggle('require_live_class_approval')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Require Admin Approval for Teacher Live Class Scheduling</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.strict_quiz_timing} onChange={() => handleSettingToggle('strict_quiz_timing')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.strict_quiz_timing} onChange={() => handleSettingToggle('strict_quiz_timing')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Enforce Strict Server-Side Quiz Timing (Anti-Cheat)</span>
                               </label>
                               <label className="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" checked={settings.strict_assignment_deadlines} onChange={() => handleSettingToggle('strict_assignment_deadlines')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                  <input type="checkbox" checked={!!settings?.strict_assignment_deadlines} onChange={() => handleSettingToggle('strict_assignment_deadlines')} className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                   <span className="text-sm font-medium text-slate-300">Prevent Task Submissions After Deadline Passes</span>
                               </label>
                           </div>

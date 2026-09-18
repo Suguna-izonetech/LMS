@@ -1069,7 +1069,13 @@ def get_institute_users(
     current_user: User = Depends(require_institute_admin), 
     db: Session = Depends(get_db)
 ):
-    query = db.query(User).filter(User.institute_id == current_user.institute_id)
+    user_roles = [r.name.lower() for r in current_user.roles]
+    is_platform_admin = any(r in {"admin", "platformadmin"} for r in user_roles)
+    
+    if is_platform_admin:
+        query = db.query(User)
+    else:
+        query = db.query(User).filter(User.institute_id == current_user.institute_id)
     
     if search:
         query = query.filter(User.username.ilike(f"%{search}%") | User.email.ilike(f"%{search}%"))
@@ -1186,7 +1192,13 @@ def update_user_status(
     current_user: User = Depends(require_institute_admin),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == target_user_id, User.institute_id == current_user.institute_id).first()
+    user_roles = [r.name.lower() for r in current_user.roles]
+    is_platform_admin = any(r in {"admin", "platformadmin"} for r in user_roles)
+    
+    if is_platform_admin:
+        user = db.query(User).filter(User.id == target_user_id).first()
+    else:
+        user = db.query(User).filter(User.id == target_user_id, User.institute_id == current_user.institute_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
@@ -2404,3 +2416,74 @@ def update_institute_settings(data: InstituteSettingsUpdate, current_user: User 
     db.commit()
     db.refresh(settings)
     return settings
+
+# --- PLATFORM ADMIN INSTITUTES DIRECTORY ---
+@router.get("/institutes")
+def list_institutes(current_user: User = Depends(require_institute_admin), db: Session = Depends(get_db)):
+    institutes = db.query(Institute).all()
+    result = []
+    for inst in institutes:
+        student_count = db.query(Student).filter(Student.institute_id == inst.id).count()
+        teacher_count = db.query(User).join(User.roles).filter(User.institute_id == inst.id, Role.name.ilike('%teacher%')).count()
+        result.append({
+            "id": inst.id,
+            "name": inst.name,
+            "subdomain": inst.subdomain or "kite",
+            "students_count": student_count,
+            "teachers_count": teacher_count,
+            "status": "Active",
+            "phone": inst.phone or "",
+            "email": inst.email or "",
+            "address": inst.address or "",
+            "created_at": inst.created_at.strftime("%b %Y") if inst.created_at else "Jan 2026"
+        })
+    return result
+
+@router.post("/institutes")
+def create_institute(payload: dict, current_user: User = Depends(require_institute_admin), db: Session = Depends(get_db)):
+    name = payload.get("name")
+    subdomain = payload.get("subdomain")
+    if not name or not subdomain:
+        raise HTTPException(status_code=400, detail="Name and subdomain are required")
+    
+    existing = db.query(Institute).filter((Institute.subdomain == subdomain) | (Institute.name == name)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Institute with this name or subdomain already exists")
+        
+    inst = Institute(
+        name=name,
+        subdomain=subdomain,
+        phone=payload.get("phone"),
+        email=payload.get("email"),
+        address=payload.get("address"),
+        about_text=payload.get("about_text")
+    )
+    db.add(inst)
+    db.commit()
+    db.refresh(inst)
+    
+    settings = InstituteSettings(institute_id=inst.id)
+    db.add(settings)
+    db.commit()
+    
+    return {
+        "id": inst.id,
+        "name": inst.name,
+        "subdomain": inst.subdomain,
+        "students_count": 0,
+        "teachers_count": 0,
+        "status": "Active",
+        "phone": inst.phone or "",
+        "email": inst.email or "",
+        "address": inst.address or "",
+        "created_at": inst.created_at.strftime("%b %Y") if inst.created_at else "Sep 2026"
+    }
+
+@router.put("/institutes/{inst_id}/status")
+def toggle_institute_status(inst_id: int, payload: dict, current_user: User = Depends(require_institute_admin), db: Session = Depends(get_db)):
+    inst = db.query(Institute).filter(Institute.id == inst_id).first()
+    if not inst:
+        raise HTTPException(status_code=404, detail="Institute not found")
+    status_val = payload.get("status", "Active")
+    return {"id": inst_id, "status": status_val}
+
