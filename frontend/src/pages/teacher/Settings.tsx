@@ -18,7 +18,6 @@ export const Settings: React.FC = () => {
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Password fields
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
@@ -61,8 +60,8 @@ export const Settings: React.FC = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('All fields are required.');
+    if (!newPassword || !confirmPassword) {
+      toast.error('New password and confirmation are required.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -77,11 +76,9 @@ export const Settings: React.FC = () => {
     try {
       setSavingPassword(true);
       await teacherApi.changePassword({
-        current_password: currentPassword,
         new_password: newPassword,
       });
       toast.success('Password changed successfully!');
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
@@ -156,15 +153,6 @@ export const Settings: React.FC = () => {
         </CardHeader>
         <CardContent className="p-5">
           <form onSubmit={handleChangePassword} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-400">Current Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-400">New Password</label>
               <Input

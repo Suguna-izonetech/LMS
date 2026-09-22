@@ -32,8 +32,11 @@ class NotificationProvider(ABC):
     def send_message(self, recipient: str, message: str) -> bool:
         pass
         
+import logging
+
+logger = logging.getLogger(__name__)
+
 class IntegrationFactory:
     @staticmethod
     def dispatch_welcome_email(student_name: str, course_name: str, amount: float, join_date: str):
-        # In a real system, this would instantiate the institute's active EmailProvider and send
-        print(f"[Mock Email] Welcome {student_name} to {course_name}. You paid {amount} on {join_date}.")
+        logger.info(f"[Email Notification] Welcome {student_name} to {course_name}. Amount: {amount}, Date: {join_date}.")

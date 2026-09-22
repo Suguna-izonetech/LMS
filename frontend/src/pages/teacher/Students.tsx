@@ -203,24 +203,36 @@ export const Students: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850">
-                {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-slate-900/20 text-slate-300">
-                    <td className="p-4 pl-6 font-bold text-slate-200">{student.name}</td>
-                    <td className="p-4 text-slate-500">{student.phone || 'N/A'}</td>
-                    <td className="p-4 text-slate-400 font-semibold">{student.course}</td>
-                    <td className="p-4 text-center font-bold text-slate-350">{student.attendance}</td>
-                    <td className="p-4 text-slate-500 italic">"{student.latest_activity}"</td>
-                    <td className="p-4 pr-6 text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => handleOpenProfile(student.id)}
-                        className="bg-violet-600 hover:bg-violet-550 text-xs px-3"
-                      >
-                        Inspect Profile
-                      </Button>
+                {students.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-500 text-sm">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <UserCheck className="h-8 w-8 text-slate-600" />
+                        <p className="font-semibold text-slate-400">No students enrolled</p>
+                        <p className="text-xs text-slate-500">Enrolled students in your assigned batches will appear here.</p>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  students.map((student) => (
+                    <tr key={student.id} className="hover:bg-slate-900/20 text-slate-300">
+                      <td className="p-4 pl-6 font-bold text-slate-200">{student.name}</td>
+                      <td className="p-4 text-slate-500">{student.phone || 'N/A'}</td>
+                      <td className="p-4 text-slate-400 font-semibold">{student.course}</td>
+                      <td className="p-4 text-center font-bold text-slate-350">{student.attendance}</td>
+                      <td className="p-4 text-slate-500 italic">"{student.latest_activity}"</td>
+                      <td className="p-4 pr-6 text-right">
+                        <Button
+                          size="sm"
+                          onClick={() => handleOpenProfile(student.id)}
+                          className="bg-violet-600 hover:bg-violet-550 text-xs px-3"
+                        >
+                          Inspect Profile
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

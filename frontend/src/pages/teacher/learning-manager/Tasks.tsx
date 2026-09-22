@@ -411,47 +411,59 @@ export const Tasks: React.FC = () => {
         </Card>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {tasks.map((task) => (
-          <Card key={task.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-[10px] font-bold text-violet-400 bg-violet-950/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {task.course_title}
-              </span>
-              <ClipboardList className="h-4 w-4 text-violet-400" />
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{task.title}</h3>
-                <p className="text-xs text-slate-500 font-medium">Due: {new Date(task.deadline).toLocaleDateString()}</p>
-                <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold uppercase mt-1 bg-slate-800 text-slate-400">
-                  {task.status}
+      {tasks.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <ClipboardList className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No assignments created</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Publish assignments and project tasks, manage deadlines, and review student grading queues.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {tasks.map((task) => (
+            <Card key={task.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <span className="text-[10px] font-bold text-violet-400 bg-violet-950/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  {task.course_title}
                 </span>
-              </div>
+                <ClipboardList className="h-4 w-4 text-violet-400" />
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{task.title}</h3>
+                  <p className="text-xs text-slate-500 font-medium">Due: {new Date(task.deadline).toLocaleDateString()}</p>
+                  <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold uppercase mt-1 bg-slate-800 text-slate-400">
+                    {task.status}
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-850">
-                <Button
-                  onClick={() => handleDeleteTask(task.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
-                >
-                  Delete
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleOpenGradingQueue(task.id)}
-                  className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
-                >
-                  <span>Grade Queue</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-850">
+                  <Button
+                    onClick={() => handleDeleteTask(task.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenGradingQueue(task.id)}
+                    className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
+                  >
+                    <span>Grade Queue</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

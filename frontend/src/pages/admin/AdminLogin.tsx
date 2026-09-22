@@ -45,7 +45,7 @@ export const AdminLogin: React.FC = () => {
             <Globe className="h-6 w-6 text-white" />
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-            KITE <span className="text-indigo-400">ADMIN</span> Portal
+            iZone <span className="text-indigo-400">ADMIN</span> Portal
           </h2>
           <p className="text-sm text-slate-400 font-medium">
             Platform governance and ecosystem administration

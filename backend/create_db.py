@@ -14,15 +14,15 @@ def create_database():
     cursor = conn.cursor()
     
     # Check if database already exists
-    cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'kite_lms'")
+    cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'izone_lms'")
     exists = cursor.fetchone()
     
     if not exists:
-        print("Database 'kite_lms' does not exist. Creating...")
-        cursor.execute("CREATE DATABASE kite_lms")
-        print("Database 'kite_lms' created successfully.")
+        print("Database 'izone_lms' does not exist. Creating...")
+        cursor.execute("CREATE DATABASE izone_lms")
+        print("Database 'izone_lms' created successfully.")
     else:
-        print("Database 'kite_lms' already exists.")
+        print("Database 'izone_lms' already exists.")
         
     cursor.close()
     conn.close()

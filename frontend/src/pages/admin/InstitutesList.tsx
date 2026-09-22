@@ -234,7 +234,7 @@ export const InstitutesList: React.FC = () => {
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-indigo-400" />
-                  <span className="font-mono text-xs text-indigo-300 font-bold">{inst.subdomain}.kite.lms</span>
+                  <span className="font-mono text-xs text-indigo-300 font-bold">{inst.subdomain}.izone.lms</span>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                   inst.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
@@ -324,11 +324,11 @@ export const InstitutesList: React.FC = () => {
                 required
               />
               <span className="inline-flex items-center px-3 rounded-r-lg border border-l-0 border-slate-800 bg-slate-900 text-xs text-indigo-300 font-mono select-none">
-                .kite.lms
+                .izone.lms
               </span>
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
-              Tenant URL: <span className="text-indigo-400 font-mono font-medium">https://{formData.subdomain || 'subdomain'}.kite.lms</span>
+              Tenant URL: <span className="text-indigo-400 font-mono font-medium">https://{formData.subdomain || 'subdomain'}.izone.lms</span>
             </p>
           </div>
 

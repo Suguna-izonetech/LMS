@@ -64,10 +64,10 @@ export const InstituteAdminLogin: React.FC = () => {
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 font-display text-lg font-bold text-slate-100 shadow-md shadow-emerald-900/30">
-            K
+            iZ
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-            KITE <span className="text-emerald-500">LMS</span> Admin
+            iZone <span className="text-emerald-500">LMS</span> Admin
           </h2>
           <p className="text-sm text-slate-500 font-medium">
             Sign in to access your institute's management portal

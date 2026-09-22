@@ -80,7 +80,7 @@ export const PlatformAdminLayout: React.FC = () => {
               <Globe className="h-4 w-4 text-white" />
             </div>
             <span className="font-display text-lg font-bold tracking-tight text-slate-100">
-              KITE <span className="text-indigo-400">ADMIN</span>
+              iZone <span className="text-indigo-400">ADMIN</span>
             </span>
           </div>
           <button

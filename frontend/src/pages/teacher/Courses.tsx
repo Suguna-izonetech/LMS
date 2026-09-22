@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Users, Clock, ArrowRight, ArrowLeft, RefreshCw, AlertCircle, Calendar, FileText, CheckSquare, Activity, MessageSquare } from 'lucide-react';
+import { BookOpen, Users, Clock, ArrowRight, ArrowLeft, RefreshCw, AlertCircle, Calendar, FileText, CheckSquare, Activity, MessageSquare, Plus, X } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { useToast } from '../../context/ToastContext';
 import { teacherApi } from '../../api/teacher';
 
 export const Courses: React.FC = () => {
+  const toast = useToast();
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [courseDetail, setCourseDetail] = useState<any>(null);
@@ -16,6 +20,14 @@ export const Courses: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Add Course State
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newCode, setNewCode] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newCourseType, setNewCourseType] = useState('Online');
+  const [creatingCourse, setCreatingCourse] = useState(false);
+
   const fetchCourses = async () => {
     try {
       setLoading(true);
@@ -26,6 +38,37 @@ export const Courses: React.FC = () => {
       setError('Failed to fetch assigned courses.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newCode.trim()) {
+      toast.error('Course title and code are required.');
+      return;
+    }
+
+    try {
+      setCreatingCourse(true);
+      await teacherApi.createCourse({
+        title: newTitle.trim(),
+        code: newCode.trim().toUpperCase(),
+        description: newDescription.trim(),
+        course_type: newCourseType,
+        batches: ['Batch A', 'Batch B', 'Batch C']
+      });
+      toast.success('New course added successfully!');
+      setNewTitle('');
+      setNewCode('');
+      setNewDescription('');
+      setNewCourseType('Online');
+      setShowAddForm(false);
+      fetchCourses();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Failed to create course.';
+      toast.error(msg);
+    } finally {
+      setCreatingCourse(false);
     }
   };
 
@@ -326,59 +369,158 @@ export const Courses: React.FC = () => {
   // --- MAIN VIEW: COURSES GRID ---
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-          My Courses
-        </h1>
-        <p className="text-sm text-slate-500 font-medium">
-          View and manage all classrooms and courses assigned to you.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">
+            My Courses
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            View and manage all classrooms and courses assigned to you.
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="bg-violet-650 hover:bg-violet-550 cursor-pointer flex items-center gap-1.5"
+        >
+          {showAddForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          <span>{showAddForm ? 'Cancel' : 'Add New Course'}</span>
+        </Button>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <Card key={course.id} className="flex flex-col">
-            <CardHeader className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  {course.code}
-                </span>
-              </div>
-              <CardTitle className="text-base font-bold line-clamp-1">{course.title}</CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-5 flex-1 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Users className="h-4 w-4 text-violet-400" />
-                  <div>
-                    <p className="font-bold text-slate-200">{course.student_count}</p>
-                    <p className="text-[10px] text-slate-550">Enrolled Students</p>
-                  </div>
+      {showAddForm && (
+        <Card className="max-w-2xl border-violet-500/20 bg-slate-900/60">
+          <CardHeader>
+            <CardTitle>Create & Register New Course</CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <form onSubmit={handleCreateCourse} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Course Title</label>
+                  <Input
+                    placeholder="e.g. Full Stack Web Development"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    required
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <BookOpen className="h-4 w-4 text-violet-400" />
-                  <div>
-                    <p className="font-bold text-slate-200">Active</p>
-                    <p className="text-[10px] text-slate-550">Status</p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Course Code</label>
+                  <Input
+                    placeholder="e.g. FSWD-101"
+                    value={newCode}
+                    onChange={(e) => setNewCode(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Delivery Mode</label>
+                  <Select
+                    value={newCourseType}
+                    onChange={(e) => setNewCourseType(e.target.value)}
+                    options={[
+                      { value: 'Online', label: 'Online Live Stream' },
+                      { value: 'Offline', label: 'In-Person Classroom' },
+                      { value: 'Hybrid', label: 'Hybrid Format' },
+                    ]}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Default Batches Initialized</label>
+                  <div className="flex gap-2 pt-1">
+                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
+                      Batch A
+                    </span>
+                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
+                      Batch B
+                    </span>
+                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
+                      Batch C
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-850">
-                <Button
-                  variant="ghost"
-                  onClick={() => fetchCourseDetails(course.id)}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-950/10 cursor-pointer"
-                >
-                  <span>Enter Classroom</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400">Course Description / Syllabus Overview</label>
+                <Input
+                  placeholder="Outline topics, weekly milestone objectives, and curriculum scope..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+              <Button
+                type="submit"
+                disabled={creatingCourse}
+                className="w-full bg-violet-650 hover:bg-violet-550 cursor-pointer mt-2"
+              >
+                {creatingCourse ? 'Creating Course...' : 'Create Course & Assign Batches'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {courses.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <BookOpen className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No courses assigned yet</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Click "Add New Course" above to create your first course and set up classroom batches.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => (
+            <Card key={course.id} className="flex flex-col">
+              <CardHeader className="relative">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    {course.code}
+                  </span>
+                </div>
+                <CardTitle className="text-base font-bold line-clamp-1">{course.title}</CardTitle>
+              </CardHeader>
+              
+              <CardContent className="p-5 flex-1 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Users className="h-4 w-4 text-violet-400" />
+                    <div>
+                      <p className="font-bold text-slate-200">{course.student_count}</p>
+                      <p className="text-[10px] text-slate-550">Enrolled Students</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <BookOpen className="h-4 w-4 text-violet-400" />
+                    <div>
+                      <p className="font-bold text-slate-200">Active</p>
+                      <p className="text-[10px] text-slate-550">Status</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-850">
+                  <Button
+                    variant="ghost"
+                    onClick={() => fetchCourseDetails(course.id)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-950/10 cursor-pointer"
+                  >
+                    <span>Enter Classroom</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

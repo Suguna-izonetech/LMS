@@ -460,49 +460,61 @@ export const Quizzes: React.FC = () => {
         </Card>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {quizzes.map((quiz) => (
-          <Card key={quiz.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md tracking-wider ${
-                quiz.status === 'published' ? 'bg-emerald-950 text-emerald-455 border border-emerald-900/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {quiz.status}
-              </span>
-              <FileQuestion className="h-4 w-4 text-violet-400" />
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div>
-                <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider block mb-1">
-                  {quiz.course_title}
+      {quizzes.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <FileQuestion className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No quizzes created</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Create online multiple-choice quizzes, set timers, and build question banks for your batches.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {quizzes.map((quiz) => (
+            <Card key={quiz.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md tracking-wider ${
+                  quiz.status === 'published' ? 'bg-emerald-950 text-emerald-455 border border-emerald-900/30' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {quiz.status}
                 </span>
-                <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{quiz.title}</h3>
-                <p className="text-xs text-slate-500 font-medium">{quiz.question_count} Questions • {quiz.duration_minutes} mins</p>
-              </div>
+                <FileQuestion className="h-4 w-4 text-violet-400" />
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                <div>
+                  <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider block mb-1">
+                    {quiz.course_title}
+                  </span>
+                  <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{quiz.title}</h3>
+                  <p className="text-xs text-slate-500 font-medium">{quiz.question_count} Questions • {quiz.duration_minutes} mins</p>
+                </div>
 
-              <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-850">
-                <Button
-                  onClick={() => handleDeleteQuiz(quiz.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
-                >
-                  Delete
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleOpenQuizDetails(quiz.id)}
-                  className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
-                >
-                  <span>Build & Review</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-850">
+                  <Button
+                    onClick={() => handleDeleteQuiz(quiz.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenQuizDetails(quiz.id)}
+                    className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
+                  >
+                    <span>Build & Review</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

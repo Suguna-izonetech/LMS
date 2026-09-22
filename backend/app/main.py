@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from app.db.database import Base, engine
 from app.routers import auth, teacher, institute_admin, student
 
-app = FastAPI(title="KITE LMS Multi-Role Portal API", version="1.0.0")
+app = FastAPI(title="iZone LMS Multi-Role Portal API", version="1.0.0")
 
 # Compress responses larger than 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
@@ -22,9 +22,14 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
         "http://localhost:3000",
         "http://127.0.0.1:3000"
     ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,7 +49,7 @@ app.include_router(student.router)
 @app.get("/")
 def root():
     return {
-        "message": "KITE LMS Teacher Portal API is running!",
+        "message": "iZone LMS API is running!",
         "version": "1.0.0"
     }
 

@@ -166,62 +166,74 @@ export const Webinars: React.FC = () => {
         </Card>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {webinars.map((web) => (
-          <Card key={web.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                web.status === 'upcoming' ? 'bg-violet-950 text-violet-400' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {web.status}
-              </span>
-              <Presentation className="h-4 w-4 text-violet-400" />
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div>
-                <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider block mb-1">
-                  {web.course_title}
+      {webinars.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <Presentation className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No webinars scheduled</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Schedule special guest seminars, masterclasses, and live workshops for your batches.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {webinars.map((web) => (
+            <Card key={web.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                  web.status === 'upcoming' ? 'bg-violet-950 text-violet-400' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {web.status}
                 </span>
-                <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{web.title}</h3>
-                <p className="text-xs text-slate-500 font-medium">By {web.speaker_name}</p>
-                <p className="text-xs text-slate-550 mt-1 italic line-clamp-2">{web.description}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs border-y border-slate-850 py-3">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Calendar className="h-3.5 w-3.5 text-violet-400" />
-                  <span>{new Date(web.scheduled_date).toLocaleDateString()}</span>
+                <Presentation className="h-4 w-4 text-violet-400" />
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                <div>
+                  <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider block mb-1">
+                    {web.course_title}
+                  </span>
+                  <h3 className="text-sm font-bold text-slate-200 line-clamp-1">{web.title}</h3>
+                  <p className="text-xs text-slate-500 font-medium">By {web.speaker_name}</p>
+                  <p className="text-xs text-slate-550 mt-1 italic line-clamp-2">{web.description}</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-550">
-                  {new Date(web.scheduled_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
 
-              <div className="pt-1 flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(web.id)}
-                  className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
-                >
-                  Cancel
-                </Button>
-                {web.meeting_url && (
+                <div className="grid grid-cols-2 gap-2 text-xs border-y border-slate-850 py-3">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <Calendar className="h-3.5 w-3.5 text-violet-400" />
+                    <span>{new Date(web.scheduled_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-550">
+                    {new Date(web.scheduled_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+
+                <div className="pt-1 flex items-center justify-between">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => window.open(web.meeting_url, '_blank')}
-                    className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
+                    onClick={() => handleDelete(web.id)}
+                    className="text-rose-450 hover:text-rose-350 p-0 hover:bg-transparent"
                   >
-                    <LinkIcon className="h-3.5 w-3.5" />
-                    <span>Enter Lobby</span>
+                    Cancel
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  {web.meeting_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(web.meeting_url, '_blank')}
+                      className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 p-0 cursor-pointer hover:bg-transparent"
+                    >
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      <span>Enter Lobby</span>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,118 +1,194 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import api from '../api/client';
+import {
+  Breadcrumb,
+  PageHeader,
+  Card,
+  CardContent,
+  Button,
+  Input,
+  Select
+} from '../components/ui';
 import { useToast } from '../context/ToastContext';
 
-const UserForm: React.FC = () => {
+export const UserForm: React.FC = () => {
   const navigate = useNavigate();
-  const { success, error } = useToast();
+  const { success, error: showError } = useToast();
   const [formData, setFormData] = useState({
-    username: '',
+    first_name: '',
+    last_name: '',
     email: '',
     password: '',
-    role: 'Student'
+    phone: '',
+    role: 'student',
+    status: 'active'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.first_name.trim() || !formData.email.trim() || !formData.password.trim()) {
+      showError('Please fill in all required fields');
+      return;
+    }
+
     setIsSubmitting(true);
-    
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('/api/institute-admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create user');
-      }
-      
+      await api.post('/institute-admin/users', formData);
       success('User created successfully');
-      navigate('/institute-manager/users');
+      navigate('/institute-admin/institute-manager/users');
     } catch (err: any) {
-      error(err.message || 'An error occurred');
+      console.error('Error creating user:', err);
+      showError(err.response?.data?.detail || err.message || 'Failed to create user');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Create User</h1>
-        <button 
-          onClick={() => navigate('/institute-manager/users')}
-          className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+    <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Institute Admin', path: '/institute-admin/dashboard' },
+          { label: 'Manage Users', path: '/institute-admin/institute-manager/users' },
+          { label: 'Create User' }
+        ]}
+      />
+
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Create New User"
+          description="Add a new student, teacher, or staff member to your institution."
+        />
+        <Button
+          variant="outline"
+          onClick={() => navigate('/institute-admin/institute-manager/users')}
+          className="flex items-center gap-2"
         >
-          Back
-        </button>
+          <ArrowLeft className="w-4 h-4" />
+          Back to Users
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.username}
-              onChange={e => setFormData({...formData, username: e.target.value})}
-            />
-          </div>
+      <Card className="max-w-2xl">
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  First Name *
+                </label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="e.g. Jane"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Last Name
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Doe"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Email Address *
+              </label>
+              <Input
+                type="email"
+                required
+                placeholder="user@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.password}
-              onChange={e => setFormData({...formData, password: e.target.value})}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                placeholder="+1 234 567 890"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-            <select
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={formData.role}
-              onChange={e => setFormData({...formData, role: e.target.value})}
-            >
-              <option value="Student">Student</option>
-              <option value="Teacher">Teacher</option>
-              <option value="InstituteAdmin">Institute Admin</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Password *
+              </label>
+              <Input
+                type="password"
+                required
+                placeholder="Minimum 6 characters"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Creating...' : 'Create User'}
-            </button>
-          </div>
-        </form>
-      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Role *
+                </label>
+                <Select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  options={[
+                    { value: 'student', label: 'Student' },
+                    { value: 'teacher', label: 'Teacher' },
+                    { value: 'staff', label: 'Staff' }
+                  ]}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Account Status
+                </label>
+                <Select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' }
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/institute-admin/institute-manager/users')}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                {isSubmitting ? 'Creating...' : 'Create User'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

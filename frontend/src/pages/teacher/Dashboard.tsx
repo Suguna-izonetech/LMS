@@ -89,7 +89,7 @@ export const Dashboard: React.FC = () => {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Today's Live Classes</CardTitle>
-              <p className="text-xs text-slate-500 font-medium">Click join to open the YouTube Live broadcast</p>
+              <p className="text-xs text-slate-500 font-medium">Click join to open the live class session</p>
             </div>
             <Video className="h-4.5 w-4.5 text-violet-400" />
           </CardHeader>

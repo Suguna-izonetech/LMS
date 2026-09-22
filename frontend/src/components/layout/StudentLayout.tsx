@@ -105,10 +105,10 @@ export const StudentLayout: React.FC = () => {
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-900">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-600 font-display text-base font-bold text-slate-100 shadow-sm shadow-sky-900/30">
-              S
+              iZ
             </div>
             <span className="font-display text-lg font-bold tracking-tight text-slate-100">
-              KITE <span className="text-sky-400">STUDENT</span>
+              iZone <span className="text-sky-400">STUDENT</span>
             </span>
           </div>
           <button

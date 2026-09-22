@@ -26,6 +26,15 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # --- PYDANTIC SCHEMAS ---
 
+class CourseCreate(BaseModel):
+    title: str
+    code: str
+    description: Optional[str] = None
+    course_type: str = "Online"
+    visibility: str = "Public"
+    status: str = "Published"
+    batches: Optional[List[str]] = None
+
 class LiveClassCreate(BaseModel):
     course_id: int
     batch_id: int
@@ -33,6 +42,8 @@ class LiveClassCreate(BaseModel):
     description: Optional[str] = None
     scheduled_date: datetime
     meeting_link: Optional[str] = None
+    live_class_url: Optional[str] = None
+    youtube_live_url: Optional[str] = None
 
 class LiveClassUpdate(BaseModel):
     title: Optional[str] = None
@@ -140,8 +151,8 @@ class ProfileUpdate(BaseModel):
     phone: Optional[str] = None
 
 class PasswordUpdate(BaseModel):
-    current_password: str
     new_password: str
+    current_password: Optional[str] = None
 
 # --- SECURITY UTILS ---
 
@@ -177,18 +188,12 @@ def get_dashboard(
     db: Session = Depends(get_db)
 ):
     assigned_courses = db.query(Course).filter(Course.teachers.any(id=current_user.id)).all()
-    if not assigned_courses:
-        student_obj = db.query(Student).filter(Student.email == current_user.email).first()
-        if student_obj and student_obj.courses:
-            assigned_courses = student_obj.courses
-        else:
-            assigned_courses = db.query(Course).all()
     assigned_course_ids = [c.id for c in assigned_courses]
     
     total_courses = len(assigned_courses)
     
     # Unique students across assigned courses
-    total_students = db.query(Student).join(Student.courses).filter(Course.id.in_(assigned_course_ids)).distinct().count()
+    total_students = db.query(Student).join(Student.courses).filter(Course.id.in_(assigned_course_ids)).distinct().count() if assigned_course_ids else 0
     
     today_start = datetime.combine(date.today(), datetime.min.time())
     today_end = datetime.combine(date.today(), datetime.max.time())
@@ -276,12 +281,6 @@ def get_courses(
     db: Session = Depends(get_db)
 ):
     courses = db.query(Course).filter(Course.teachers.any(id=current_user.id)).all()
-    if not courses:
-        student_obj = db.query(Student).filter(Student.email == current_user.email).first()
-        if student_obj and student_obj.courses:
-            courses = student_obj.courses
-        else:
-            courses = db.query(Course).all()
     result = []
     for c in courses:
         student_count = db.query(Student).join(Student.courses).filter(Course.id == c.id).count()
@@ -293,6 +292,52 @@ def get_courses(
             "student_count": student_count
         })
     return result
+
+@router.post("/courses")
+def create_course(
+    data: CourseCreate,
+    current_user: User = Depends(require_role("teacher")),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(Course).filter(or_(Course.title == data.title, Course.code == data.code)).first()
+    if existing:
+        if existing.code == data.code:
+            raise HTTPException(status_code=400, detail="A course with this code already exists")
+        raise HTTPException(status_code=400, detail="A course with this title already exists")
+    
+    course = Course(
+        institute_id=current_user.institute_id,
+        title=data.title,
+        code=data.code.upper(),
+        description=data.description,
+        course_type=data.course_type,
+        visibility=data.visibility,
+        status=data.status,
+    )
+    course.teachers.append(current_user)
+    db.add(course)
+    db.flush()
+    
+    # Create standard batches (Batch A, Batch B, Batch C) or requested batches
+    batch_names = data.batches if data.batches and len(data.batches) > 0 else ["Batch A", "Batch B", "Batch C"]
+    for b_name in batch_names:
+        batch = Batch(
+            institute_id=current_user.institute_id,
+            name=b_name,
+            course_id=course.id,
+            status="Active"
+        )
+        db.add(batch)
+        
+    db.commit()
+    db.refresh(course)
+    return {
+        "id": course.id,
+        "title": course.title,
+        "code": course.code,
+        "description": course.description,
+        "message": "Course created successfully"
+    }
 
 @router.get("/courses/{course_id}")
 def get_course_details(
@@ -391,6 +436,9 @@ def list_live_classes(
     assigned_courses = db.query(Course).filter(Course.teachers.any(id=current_user.id)).all()
     assigned_course_ids = [c.id for c in assigned_courses]
     
+    if not assigned_course_ids:
+        return []
+        
     query = db.query(LiveClass).filter(LiveClass.course_id.in_(assigned_course_ids))
     if status:
         query = query.filter(LiveClass.status == status)
@@ -399,13 +447,15 @@ def list_live_classes(
     return [
         {
             "id": c.id,
-            "course_title": c.course.title,
-            "batch_name": c.batch.name,
+            "course_title": c.course.title if c.course else "General",
+            "batch_name": c.batch.name if c.batch else "All Batches",
             "title": c.title,
             "description": c.description,
             "scheduled_date": c.scheduled_date.isoformat(),
             "status": c.status,
             "meeting_link": c.meeting_link,
+            "live_class_url": c.meeting_link,
+            "youtube_live_url": c.meeting_link,
             "recording_url": c.recording_url
         }
         for c in classes
@@ -424,6 +474,8 @@ def schedule_live_class(
     if not batch:
         raise HTTPException(status_code=400, detail="Batch does not belong to this course")
         
+    meeting_url = data.meeting_link or data.live_class_url or data.youtube_live_url
+    
     lc = LiveClass(
         course_id=data.course_id,
         batch_id=data.batch_id,
@@ -431,7 +483,7 @@ def schedule_live_class(
         title=data.title,
         description=data.description,
         scheduled_date=data.scheduled_date,
-        meeting_link=data.youtube_live_url,
+        meeting_link=meeting_url,
         status="upcoming"
     )
     db.add(lc)
@@ -2011,7 +2063,7 @@ def change_password(
     current_user: User = Depends(require_role("teacher")),
     db: Session = Depends(get_db)
 ):
-    if not verify_password(payload.current_password, current_user.hashed_password):
+    if payload.current_password and not verify_password(payload.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect current password")
         
     current_user.hashed_password = get_password_hash(payload.new_password)

@@ -29,7 +29,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('kite_workspace', workspace);
   };
 
-  // Simple permission mapping for mock purposes:
+  // Role-based permission mapping:
   // - Admin: all permissions
   // - InstituteAdmin: everything except core settings/ explore plans
   // - Teacher: courses, learning manager, newsfeed, chat (no billing, no CRM, no system roles)

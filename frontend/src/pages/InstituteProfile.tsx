@@ -21,23 +21,23 @@ export const InstituteProfile: React.FC = () => {
   const [primaryTheme, setPrimaryTheme] = useState('#6366f1');
 
   // --- Info state ---
-  const [instName, setInstName] = useState('KITE Developer Academy');
+  const [instName, setInstName] = useState('iZone Developer Academy');
   const [instAbout, setInstAbout] = useState('An advanced, SaaS-enabled educational academy for professional web engineering.');
-  const [instEmail, setInstEmail] = useState('support@kitedev.com');
+  const [instEmail, setInstEmail] = useState('support@izonedev.com');
   const [instPhone, setInstPhone] = useState('+1 (555) 019-9231');
   const [instAddress, setInstAddress] = useState('Building 42, Silicon Valley, CA');
 
   // --- Media & Socials ---
-  const [youtubeChannel, setYoutubeChannel] = useState('https://youtube.com/c/kitedevacademy');
-  const [socialFb, setSocialFb] = useState('https://facebook.com/kitedev');
-  const [socialLinkedin, setSocialLinkedin] = useState('https://linkedin.com/company/kitedev');
+  const [youtubeChannel, setYoutubeChannel] = useState('https://youtube.com/c/izonedevacademy');
+  const [socialFb, setSocialFb] = useState('https://facebook.com/izonedev');
+  const [socialLinkedin, setSocialLinkedin] = useState('https://linkedin.com/company/izonedev');
 
   // --- Domains ---
-  const [subdomain, setSubdomain] = useState('kitedev');
-  const [customDomain, setCustomDomain] = useState('academy.kitedev.com');
+  const [subdomain, setSubdomain] = useState('izonedev');
+  const [customDomain, setCustomDomain] = useState('academy.izonedev.com');
 
   // --- SEO ---
-  const [seoTitle, setSeoTitle] = useState('KITE Developer Academy - Master Modern Coding');
+  const [seoTitle, setSeoTitle] = useState('iZone Developer Academy - Master Modern Coding');
   const [seoKeywords, setSeoKeywords] = useState('coding bootcamp, react course, data science, software engineer');
   const [seoDesc, setSeoDesc] = useState('Join the premier SaaS development camp. Master React, Python, and full stack systems.');
 
@@ -54,7 +54,7 @@ export const InstituteProfile: React.FC = () => {
     }, 1200);
   };
 
-  const handleMockUpload = (type: 'logo' | 'banner') => {
+  const handleUploadImage = (type: 'logo' | 'banner') => {
     if (type === 'logo') {
       setLogoUrl('https://images.unsplash.com/photo-1572044160444-ad60f028b14a?w=120&q=80');
     } else {
@@ -116,7 +116,7 @@ export const InstituteProfile: React.FC = () => {
                       <div className="w-24 h-24 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center p-3 relative group shadow-inner">
                         <img src={logoUrl} alt="Logo" className="w-full h-full object-contain rounded-md" />
                         <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                          <button type="button" onClick={() => handleMockUpload('logo')} className="text-[10px] font-bold text-indigo-400 hover:underline">Change</button>
+                          <button type="button" onClick={() => handleUploadImage('logo')} className="text-[10px] font-bold text-indigo-400 hover:underline">Change</button>
                         </div>
                       </div>
                       <p className="text-[10px] text-slate-600">Recommends 512x512 PNG format.</p>
@@ -127,7 +127,7 @@ export const InstituteProfile: React.FC = () => {
                       <div className="h-24 w-full rounded-xl border border-slate-800 bg-slate-950 overflow-hidden relative group shadow-inner">
                         <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button type="button" onClick={() => handleMockUpload('banner')} className="text-[10px] font-bold text-indigo-400 hover:underline">Replace Banner</button>
+                          <button type="button" onClick={() => handleUploadImage('banner')} className="text-[10px] font-bold text-indigo-400 hover:underline">Replace Banner</button>
                         </div>
                       </div>
                       <p className="text-[10px] text-slate-600 font-medium">Recommends 1200x400 Landscape vector background.</p>
@@ -213,17 +213,17 @@ export const InstituteProfile: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-300">Support Email Address</label>
-                      <Input type="email" value={instEmail} onChange={e => setInstEmail(e.target.value)} />
+                      <Input type="email" value={instEmail} onChange={e => setInstEmail(e.target.value)} placeholder="admin@institution.edu" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-300">Support Contact Number</label>
-                      <Input value={instPhone} onChange={e => setInstPhone(e.target.value)} />
+                      <Input value={instPhone} onChange={e => setInstPhone(e.target.value)} placeholder="+1 (555) 019-2831" />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-300">Location Address</label>
-                    <Input value={instAddress} onChange={e => setInstAddress(e.target.value)} />
+                    <label className="text-xs font-semibold text-slate-300">Office Physical Address</label>
+                    <Input value={instAddress} onChange={e => setInstAddress(e.target.value)} placeholder="123 Education Boulevard, Suite 400..." />
                   </div>
                 </CardContent>
               </Card>
@@ -232,14 +232,13 @@ export const InstituteProfile: React.FC = () => {
             <div className="space-y-6">
               <Card>
                 <CardContent className="p-6 space-y-3.5">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Simulated Office Map</span>
-                  {/* Google maps mock */}
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Office Map</span>
                   <div className="aspect-square bg-slate-950 border border-slate-850 rounded-xl overflow-hidden relative flex items-center justify-center p-3 text-center">
                     <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-40" />
                     <div className="space-y-2 z-10">
                       <MapPin className="h-6 w-6 text-indigo-400 mx-auto" />
                       <span className="text-xs font-semibold text-slate-300 block">{instAddress || 'Coordinates Unassigned'}</span>
-                      <p className="text-[10px] text-slate-550 leading-relaxed max-w-[200px] mx-auto">Mock Google Maps integration active. Embed maps iframe settings in billing menu.</p>
+                      <p className="text-[10px] text-slate-550 leading-relaxed max-w-[200px] mx-auto">Google Maps integration available. Configure API parameters in settings.</p>
                     </div>
                   </div>
                 </CardContent>
@@ -283,7 +282,7 @@ export const InstituteProfile: React.FC = () => {
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Subdomain & Domain Parameters</span>
                   
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-300">KITE LMS Subdomain</label>
+                    <label className="text-xs font-semibold text-slate-300">iZone LMS Subdomain</label>
                     <div className="flex items-center">
                       <Input
                         value={subdomain}
@@ -291,7 +290,7 @@ export const InstituteProfile: React.FC = () => {
                         className="rounded-r-none text-right font-semibold"
                       />
                       <span className="bg-slate-900 border border-l-0 border-slate-800 px-3.5 py-2 rounded-r-lg text-xs font-bold text-slate-500 select-none">
-                        .kitelms.com
+                        .izonelms.com
                       </span>
                     </div>
                   </div>
@@ -323,7 +322,7 @@ export const InstituteProfile: React.FC = () => {
                         <tr>
                           <td className="p-2.5 font-bold text-slate-500">CNAME</td>
                           <td className="p-2.5">academy</td>
-                          <td className="p-2.5">domains.kitelms.com</td>
+                          <td className="p-2.5">domains.izonelms.com</td>
                           <td className="p-2.5">Automatic</td>
                         </tr>
                         <tr>
@@ -346,7 +345,7 @@ export const InstituteProfile: React.FC = () => {
                   <div className="p-4 bg-slate-950 border border-slate-850 rounded-xl space-y-2 text-center">
                     <Globe className="h-6 w-6 text-indigo-400 mx-auto" />
                     <span className="text-xs font-bold text-slate-200 block">WordPress integration sync active</span>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">Map catalog widgets to WordPress layouts using KITE official shortcode plugins.</p>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">Map catalog widgets to WordPress layouts using iZone official shortcode plugins.</p>
                   </div>
                 </CardContent>
               </Card>

@@ -50,14 +50,10 @@ export const Sidebar: React.FC<{ isOpen: boolean; toggleSidebar: () => void }> =
       name: 'Learning Manager',
       icon: GraduationCap,
       subItems: [
-        { name: 'Live Classes', path: '/institute-admin/learning-manager/live-classes' },
         { name: 'Prerecorded Modules', path: '/institute-admin/learning-manager/prerecorded-modules' },
         { name: 'Manage Books', path: '/institute-admin/learning-manager/books' },
-        { name: 'Study Materials', path: '/institute-admin/learning-manager/study-materials' },
-        { name: 'Quiz', path: '/institute-admin/learning-manager/quiz' },
-        { name: 'Manage Tasks', path: '/institute-admin/learning-manager/tasks' },
+        { name: 'Manage Exams', path: '/institute-admin/learning-manager/quiz' },
         { name: 'Webinars', path: '/institute-admin/learning-manager/webinars' },
-        { name: '1:1 Consultations', path: '/institute-admin/learning-manager/consultations' },
       ],
     },
     {
@@ -76,7 +72,6 @@ export const Sidebar: React.FC<{ isOpen: boolean; toggleSidebar: () => void }> =
       icon: Share2,
       subItems: [
         { name: 'Newsfeed', path: '/institute-admin/social-connect/newsfeed' },
-        { name: 'Chat', path: '/institute-admin/social-connect/chat' },
       ],
     },
     { name: 'CRM', path: '/institute-admin/crm', icon: Users },
@@ -117,10 +112,10 @@ export const Sidebar: React.FC<{ isOpen: boolean; toggleSidebar: () => void }> =
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-900">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-display text-base font-bold text-slate-100 shadow-sm shadow-emerald-900/30">
-              K
+              iZ
             </div>
             <span className="font-display text-lg font-bold tracking-tight text-slate-100">
-              KITE <span className="text-emerald-500">LMS</span>
+              iZone <span className="text-emerald-500">LMS</span>
             </span>
           </div>
           <button

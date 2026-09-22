@@ -73,7 +73,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                   {user?.username || 'Admin User'}
                 </span>
                 <span className="text-xs text-slate-500 font-medium truncate max-w-[120px]">
-                  {user?.email || 'admin@kite.lms'}
+                  {user?.email || 'admin@izone.lms'}
                 </span>
               </div>
               <ChevronDown className="h-4 w-4 text-slate-500 hidden md:block" />

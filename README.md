@@ -1,4 +1,4 @@
-# 🎓 KITE LMS — Enterprise Learning Management System
+# 🎓 iZone LMS — Enterprise Learning Management System
 
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -9,7 +9,7 @@
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-An enterprise-grade, multi-tenant **Learning Management System (LMS)** designed for educational institutes, academies, and online learning providers. **KITE LMS** separates responsibilities across **4 distinct login portals** (Platform Admin, Institute Admin, Teacher, Student) to manage courses, live interactive classes, student performance, assessments, CRM leads, billing, automated workflows, and certificates.
+An enterprise-grade, multi-tenant **Learning Management System (LMS)** designed for educational institutes, academies, and online learning providers. **iZone LMS** separates responsibilities across **4 distinct login portals** (Platform Admin, Institute Admin, Teacher, Student) to manage courses, live interactive classes, student performance, assessments, CRM leads, billing, automated workflows, and certificates.
 
 ---
 

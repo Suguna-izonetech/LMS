@@ -16,7 +16,7 @@ export const LiveClasses: React.FC = () => {
   const [selectedBatchId, setSelectedBatchId] = useState<string>('');
   const [topic, setTopic] = useState('');
   const [dateTime, setDateTime] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [liveClassUrl, setLiveClassUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Attendance states
@@ -54,9 +54,10 @@ export const LiveClasses: React.FC = () => {
       const fetchCourseDetails = async () => {
         try {
           const detail = await teacherApi.getCourse(Number(selectedCourseId));
-          setBatches(detail.batches || []);
-          if (detail.batches && detail.batches.length > 0) {
-            setSelectedBatchId(String(detail.batches[0].id));
+          const courseBatches = detail.batches || [];
+          setBatches(courseBatches);
+          if (courseBatches.length > 0) {
+            setSelectedBatchId(String(courseBatches[0].id));
           } else {
             setSelectedBatchId('');
           }
@@ -70,13 +71,13 @@ export const LiveClasses: React.FC = () => {
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic || !dateTime || !youtubeUrl || !selectedCourseId || !selectedBatchId) {
+    if (!topic || !dateTime || !liveClassUrl || !selectedCourseId || !selectedBatchId) {
       toast.error('Please fill in all fields.');
       return;
     }
 
-    if (!youtubeUrl.includes('youtube.com') && !youtubeUrl.includes('youtu.be')) {
-      toast.warning('Please enter a valid YouTube Live URL.');
+    if (!liveClassUrl.startsWith('http://') && !liveClassUrl.startsWith('https://')) {
+      toast.warning('Please enter a valid URL starting with https:// or http://');
       return;
     }
 
@@ -87,12 +88,14 @@ export const LiveClasses: React.FC = () => {
         title: topic,
         description: `Live session on ${topic}`,
         scheduled_date: new Date(dateTime).toISOString(),
-        youtube_live_url: youtubeUrl
+        meeting_link: liveClassUrl,
+        live_class_url: liveClassUrl,
+        youtube_live_url: liveClassUrl
       });
       toast.success('Live class scheduled successfully!');
       setTopic('');
       setDateTime('');
-      setYoutubeUrl('');
+      setLiveClassUrl('');
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Failed to schedule class.');
@@ -278,7 +281,7 @@ export const LiveClasses: React.FC = () => {
           Live Classes
         </h1>
         <p className="text-sm text-slate-500 font-medium">
-          Schedule, stream, and manage your YouTube Live class broadcasts.
+          Schedule, stream, and manage your live class broadcasts.
         </p>
       </div>
 
@@ -331,12 +334,12 @@ export const LiveClasses: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400">YouTube Live URL</label>
+                <label className="text-xs font-semibold text-slate-400">Live Class URL</label>
                 <Input
                   type="url"
-                  placeholder="https://youtube.com/live/..."
-                  value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://... (e.g. Zoom, Google Meet, YouTube Live)"
+                  value={liveClassUrl}
+                  onChange={(e) => setLiveClassUrl(e.target.value)}
                 />
               </div>
 
@@ -354,9 +357,12 @@ export const LiveClasses: React.FC = () => {
           </CardHeader>
           <CardContent className="p-5">
             {classes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-slate-500">
-                <Video className="h-10 w-10 text-slate-650 mb-3" />
-                <p className="text-xs font-bold uppercase tracking-widest">No classes scheduled</p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-500 text-center">
+                <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+                  <Video className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-semibold text-slate-300">No scheduled broadcasts</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm">Use the form on the left to schedule a new live class broadcast for your batches.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -383,14 +389,16 @@ export const LiveClasses: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => window.open(cls.youtube_live_url, '_blank')}
-                        className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 cursor-pointer text-xs"
-                      >
-                        <Play className="h-3.5 w-3.5 fill-current" />
-                        <span>Go Live</span>
-                      </Button>
+                      {(cls.meeting_link || cls.live_class_url || cls.youtube_live_url) && (
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(cls.meeting_link || cls.live_class_url || cls.youtube_live_url, '_blank')}
+                          className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 cursor-pointer text-xs"
+                        >
+                          <Play className="h-3.5 w-3.5 fill-current" />
+                          <span>Go Live</span>
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         onClick={() => handleOpenAttendance(cls.id, cls.title)}

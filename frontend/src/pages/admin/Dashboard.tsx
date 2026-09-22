@@ -99,14 +99,14 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
                   <div>
                     <p className="font-bold text-slate-200">New Institute Onboarded: Apex Academy</p>
-                    <p className="text-[11px] text-slate-500">Subdomain: apex.kite.lms • Plan: Enterprise Pro</p>
+                    <p className="text-[11px] text-slate-500">Subdomain: apex.izone.lms • Plan: Enterprise Pro</p>
                   </div>
                   <span className="text-slate-500">10 mins ago</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
                   <div>
-                    <p className="font-bold text-slate-200">Payment Gateway Renewal: Kite Institute</p>
+                    <p className="font-bold text-slate-200">Payment Gateway Renewal: iZone Institute</p>
                     <p className="text-[11px] text-slate-500">Razorpay Auto-Settlement • Amount: ₹45,000</p>
                   </div>
                   <span className="text-slate-500">45 mins ago</span>

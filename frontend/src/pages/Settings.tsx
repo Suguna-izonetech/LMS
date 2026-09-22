@@ -301,7 +301,7 @@ export const Settings: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
                                   </span>
                                   <input type="text" value={instProfile?.subdomain || ''} onChange={e => setInstProfile({...instProfile, subdomain: e.target.value})} className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md bg-slate-950 border border-slate-800 text-sm text-slate-200" />
                                   <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-700 bg-slate-800 text-slate-400 sm:text-sm">
-                                      .kitelms.com
+                                      .izonelms.com
                                   </span>
                               </div>
                           </div>

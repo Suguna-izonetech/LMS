@@ -458,7 +458,7 @@ export const AdminUsersList: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <Building className="h-3.5 w-3.5 text-slate-500" />
-                        <span>{u.role?.toLowerCase() === 'admin' ? 'Global Platform' : 'Kite Institute'}</span>
+                        <span>{u.role?.toLowerCase() === 'admin' ? 'Global Platform' : 'iZone Institute'}</span>
                       </div>
                     </TableCell>
 

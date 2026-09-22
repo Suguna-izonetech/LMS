@@ -67,7 +67,7 @@ export const CoursesList: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       if (err.response?.status === 403) {
-        setErrorMessage('Access Denied (403): Your current session does not have Institute Admin or Teacher privileges. Please sign in with instituteadmin@kite.lms.');
+        setErrorMessage('Access Denied (403): Your current session does not have Institute Admin or Teacher privileges. Please sign in with instituteadmin@izone.lms.');
         error('Access denied. Please log in with an authorized Institute Admin account.');
       } else {
         setErrorMessage(err.response?.data?.detail || 'Could not load academic course structures from the server.');

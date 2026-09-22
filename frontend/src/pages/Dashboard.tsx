@@ -111,7 +111,6 @@ export const Dashboard: React.FC = () => {
     { title: 'Teachers', value: summary.teachers.toLocaleString(), icon: <GraduationCap className="h-5 w-5 text-indigo-400" /> },
     { title: 'Courses', value: summary.courses.toLocaleString(), icon: <BookOpen className="h-5 w-5 text-blue-400" /> },
     { title: 'Active Batches', value: summary.active_batches.toLocaleString(), icon: <CalendarDays className="h-5 w-5 text-violet-400" /> },
-    { title: "Today's Classes", value: summary.todays_classes.toLocaleString(), icon: <Video className="h-5 w-5 text-pink-400" /> },
     { title: 'Pending Leads', value: summary.pending_leads.toLocaleString(), icon: <UserPlus className="h-5 w-5 text-amber-400" /> },
     { title: 'Monthly Revenue', value: `₹${summary.monthly_revenue.toLocaleString()}`, icon: <DollarSign className="h-5 w-5 text-emerald-500" /> },
   ];

@@ -185,44 +185,56 @@ export const Leads: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {leads.map((lead) => (
-          <Card key={lead.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-[10px] font-bold text-violet-400 bg-violet-950/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {lead.status}
-              </span>
-              <Users className="h-4.5 w-4.5 text-violet-400" />
-            </CardHeader>
-            <CardContent className="p-5 space-y-4 text-xs">
-              <div>
-                <h3 className="text-sm font-bold text-slate-200">{lead.name}</h3>
-                <p className="text-xs text-slate-500 font-semibold">{lead.course_interest}</p>
-              </div>
+      {leads.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <Users className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No leads assigned</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Prospective course inquiries and admission leads assigned to you will appear here.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {leads.map((lead) => (
+            <Card key={lead.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <span className="text-[10px] font-bold text-violet-400 bg-violet-950/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  {lead.status}
+                </span>
+                <Users className="h-4.5 w-4.5 text-violet-400" />
+              </CardHeader>
+              <CardContent className="p-5 space-y-4 text-xs">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-200">{lead.name}</h3>
+                  <p className="text-xs text-slate-500 font-semibold">{lead.course_interest}</p>
+                </div>
 
-              <div className="space-y-2 border-t border-slate-850 pt-3 text-slate-400">
-                <p className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-slate-650" />
-                  <span>{lead.phone}</span>
-                </p>
-                <p className="text-slate-550 font-bold block text-[10px]">
-                  Last follow-up: {lead.last_followup ? new Date(lead.last_followup).toLocaleDateString() : 'Never'}
-                </p>
-              </div>
+                <div className="space-y-2 border-t border-slate-850 pt-3 text-slate-400">
+                  <p className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 text-slate-650" />
+                    <span>{lead.phone}</span>
+                  </p>
+                  <p className="text-slate-550 font-bold block text-[10px]">
+                    Last follow-up: {lead.last_followup ? new Date(lead.last_followup).toLocaleDateString() : 'Never'}
+                  </p>
+                </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-slate-850">
-                <Button 
-                  onClick={() => handleOpenLeadDetails(lead.id)}
-                  className="bg-violet-650 hover:bg-violet-550 text-xs cursor-pointer flex items-center gap-1 w-full justify-center"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span>Nurture & Log Follow-up</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="pt-2 flex justify-end gap-2 border-t border-slate-850">
+                  <Button 
+                    onClick={() => handleOpenLeadDetails(lead.id)}
+                    className="bg-violet-650 hover:bg-violet-550 text-xs cursor-pointer flex items-center gap-1 w-full justify-center"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>Nurture & Log Follow-up</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

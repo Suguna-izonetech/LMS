@@ -45,7 +45,7 @@ export const StudentLogin: React.FC = () => {
             <GraduationCap className="h-6 w-6 text-white" />
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-            KITE <span className="text-sky-400">STUDENT</span> Portal
+            iZone <span className="text-sky-400">STUDENT</span> Portal
           </h2>
           <p className="text-sm text-slate-400 font-medium">
             Sign in to access your enrolled courses & live classrooms

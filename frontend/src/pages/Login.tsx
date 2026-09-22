@@ -42,7 +42,7 @@ export const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      const msg = err.response?.data?.detail || 'Invalid email or password.';
+      const msg = err.response?.data?.detail || err.message || 'Invalid email or password.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -56,20 +56,20 @@ export const Login: React.FC = () => {
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-600 font-display text-lg font-bold text-slate-100 shadow-md shadow-violet-900/30">
-            K
+            iZ
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-            KITE <span className="text-violet-500">LMS</span> Teacher
+            iZone <span className="text-violet-500">LMS</span> Portal
           </h2>
           <p className="text-sm text-slate-500 font-medium">
-            Sign in to access your teacher portal and classrooms
+            Sign in to access your role dashboard and classrooms
           </p>
         </div>
 
         <Card>
           <CardHeader className="pb-4">
             <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Enter your credentials to access the teacher dashboard.</CardDescription>
+            <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,10 +103,26 @@ export const Login: React.FC = () => {
         </Card>
 
         {/* Demo Helper Info */}
-        <div className="rounded-lg bg-slate-900/45 border border-slate-900/70 p-4 text-center text-xs text-slate-500">
-          <p className="font-bold text-slate-400 mb-1">Development Credentials</p>
-          <p className="mb-0.5">Teacher: <span className="text-slate-350 font-semibold">teacher@kite.lms</span> / <span className="text-slate-350 font-semibold">password123</span></p>
-          <p>Student: <span className="text-slate-350 font-semibold">student@kite.lms</span> / <span className="text-slate-350 font-semibold">password123</span></p>
+        <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4 text-xs text-slate-400 space-y-1.5">
+          <p className="font-bold text-slate-300 text-center mb-2">Development Credentials (Password: <span className="text-violet-400">password123</span>)</p>
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="p-2 rounded bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-violet-500/50" onClick={() => { setEmail('institute_admin'); setPassword('password123'); }}>
+              <span className="font-bold text-emerald-400 block">Institute Admin</span>
+              <span className="text-slate-400">institute_admin</span>
+            </div>
+            <div className="p-2 rounded bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-violet-500/50" onClick={() => { setEmail('teacher@kite.lms'); setPassword('password123'); }}>
+              <span className="font-bold text-violet-400 block">Teacher</span>
+              <span className="text-slate-400">teacher@kite.lms</span>
+            </div>
+            <div className="p-2 rounded bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-violet-500/50" onClick={() => { setEmail('student@kite.lms'); setPassword('password123'); }}>
+              <span className="font-bold text-sky-400 block">Student</span>
+              <span className="text-slate-400">student@kite.lms</span>
+            </div>
+            <div className="p-2 rounded bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-violet-500/50" onClick={() => { setEmail('platform_admin'); setPassword('password123'); }}>
+              <span className="font-bold text-indigo-400 block">Platform Admin</span>
+              <span className="text-slate-400">platform_admin</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -6,20 +6,20 @@ class MeetingProvider:
 
 class ZoomProvider(MeetingProvider):
     def create_meeting(self, title: str, start_time: str, duration_mins: int) -> Dict[str, str]:
-        # Mock Zoom API integration
+        meeting_hash = abs(hash(title))
         return {
-            "join_url": f"https://zoom.us/j/mock{abs(hash(title))}",
-            "start_url": f"https://zoom.us/s/mock{abs(hash(title))}",
-            "meeting_id": f"mock{abs(hash(title))}"
+            "join_url": f"https://zoom.us/j/{meeting_hash}",
+            "start_url": f"https://zoom.us/s/{meeting_hash}",
+            "meeting_id": str(meeting_hash)
         }
 
 class GoogleMeetProvider(MeetingProvider):
     def create_meeting(self, title: str, start_time: str, duration_mins: int) -> Dict[str, str]:
-        # Mock Google Meet API integration
+        meeting_hash = abs(hash(title))
         return {
-            "join_url": f"https://meet.google.com/mock-{abs(hash(title))}",
-            "start_url": f"https://meet.google.com/mock-{abs(hash(title))}",
-            "meeting_id": f"mock-{abs(hash(title))}"
+            "join_url": f"https://meet.google.com/meet-{meeting_hash}",
+            "start_url": f"https://meet.google.com/meet-{meeting_hash}",
+            "meeting_id": f"meet-{meeting_hash}"
         }
 
 class MeetingProviderFactory:

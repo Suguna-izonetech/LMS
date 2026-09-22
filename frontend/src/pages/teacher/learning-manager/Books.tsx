@@ -197,51 +197,63 @@ export const Books: React.FC = () => {
         </Card>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {books.map((book) => (
-          <Card key={book.id}>
-            <CardContent className="p-5 flex gap-4 items-start">
-              <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md bg-violet-950/40 border border-violet-500/20 text-violet-400">
-                <BookIcon className="h-6 w-6" />
-              </div>
-              <div className="space-y-2 flex-1 min-w-0">
-                <div className="flex flex-wrap gap-1">
-                  {book.courses.map((c: any) => (
-                    <span key={c.id} className="text-[9px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-1.5 py-0.2 rounded uppercase">
-                      {c.title}
-                    </span>
-                  ))}
+      {books.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <BookIcon className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No books published</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Upload textbooks, e-books, or reference guides to share with your assigned courses.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {books.map((book) => (
+            <Card key={book.id}>
+              <CardContent className="p-5 flex gap-4 items-start">
+                <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md bg-violet-950/40 border border-violet-500/20 text-violet-400">
+                  <BookIcon className="h-6 w-6" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-200 truncate">{book.title}</h3>
-                <p className="text-xs text-slate-500 font-medium truncate">By {book.author}</p>
-                <p className="text-xs text-slate-500 line-clamp-1 italic">{book.description}</p>
-              </div>
-              <div className="flex flex-col gap-1 items-end shrink-0">
-                {book.file_url && (
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap gap-1">
+                    {book.courses.map((c: any) => (
+                      <span key={c.id} className="text-[9px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-1.5 py-0.2 rounded uppercase">
+                        {c.title}
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-200 truncate">{book.title}</h3>
+                  <p className="text-xs text-slate-500 font-medium truncate">By {book.author}</p>
+                  <p className="text-xs text-slate-500 line-clamp-1 italic">{book.description}</p>
+                </div>
+                <div className="flex flex-col gap-1 items-end shrink-0">
+                  {book.file_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(`http://localhost:8000${book.file_url}`, '_blank')}
+                      className="text-slate-400 hover:text-slate-250 cursor-pointer p-1.5"
+                      aria-label="Download book"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => window.open(`http://localhost:8000${book.file_url}`, '_blank')}
-                    className="text-slate-400 hover:text-slate-250 cursor-pointer p-1.5"
-                    aria-label="Download book"
+                    onClick={() => handleDelete(book.id)}
+                    className="text-rose-450 hover:text-rose-350 cursor-pointer p-1.5"
+                    aria-label="Delete book"
                   >
-                    <Download className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(book.id)}
-                  className="text-rose-450 hover:text-rose-350 cursor-pointer p-1.5"
-                  aria-label="Delete book"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

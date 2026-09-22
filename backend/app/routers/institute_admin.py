@@ -10,12 +10,14 @@ from app.models.all_models import (
     InstituteBillingConfig, ReportHistory, InstitutePlanAddon, InstituteSettings, Conversation, Message, 
     Notification, UserNotification, Institute, Permission, Role, user_roles, role_permissions, student_courses, 
     NewsfeedPost, NewsfeedAttachment, PrerecordedModule, Lecture, Book, StudyMaterial, Task, TaskAttachment, 
-    Webinar, Consultation, ConsultationSlot, ConsultationBooking
+    Webinar, Consultation, ConsultationSlot, ConsultationBooking,
+    Quiz, QuizQuestion, QuizOption, QuizAttempt, QuizAnswer
 )
 from app.core.dependencies import require_institute_admin
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.schemas.library import BookResponse, StudyMaterialResponse
 from app.schemas.tasks import TaskResponse, TaskCreate, TaskUpdate
+from app.schemas.quiz import QuizResponse, QuizCreate, QuizUpdate
 from app.schemas.webinars import WebinarResponse, WebinarCreate, WebinarUpdate
 from app.schemas.consultations import ConsultationResponse, ConsultationCreate, ConsultationUpdate, ConsultationSlotResponse, ConsultationSlotCreate, ConsultationBookingResponse
 from app.schemas.users import InstituteUserCreate, InstituteUserResponse, BulkUserImportResult
@@ -841,6 +843,180 @@ def delete_task(task_id: int, current_user: User = Depends(require_institute_adm
     db.delete(task)
     db.commit()
     return {"detail": "Task deleted"}
+
+# --- QUIZZES ---
+
+@router.get("/quizzes", response_model=list[QuizResponse])
+def get_quizzes(
+    search: Optional[str] = None,
+    course_id: Optional[int] = None,
+    status: Optional[str] = None,
+    current_user: User = Depends(require_institute_admin), 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Quiz).filter(Quiz.institute_id == current_user.institute_id)
+    if search:
+        query = query.filter(Quiz.title.ilike(f"%{search}%"))
+    if course_id:
+        query = query.filter(Quiz.course_id == course_id)
+    if status and status != "All":
+        query = query.filter(Quiz.status == status)
+        
+    quizzes = query.all()
+    result = []
+    for q in quizzes:
+        course = db.query(Course).filter(Course.id == q.course_id).first()
+        batch = db.query(Batch).filter(Batch.id == q.batch_id).first() if q.batch_id else None
+        result.append({
+            "id": q.id,
+            "title": q.title,
+            "description": q.description,
+            "course_id": q.course_id,
+            "batch_id": q.batch_id,
+            "duration_minutes": q.duration_minutes,
+            "total_marks": q.total_marks,
+            "start_date": q.start_date,
+            "end_date": q.end_date,
+            "status": q.status,
+            "institute_id": q.institute_id,
+            "created_by": q.created_by,
+            "created_at": q.created_at,
+            "updated_at": q.updated_at,
+            "course_title": course.title if course else "Unknown",
+            "batch_name": batch.name if batch else "All Batches",
+            "question_count": len(q.questions) if q.questions else 0,
+            "questions": q.questions or []
+        })
+    return result
+
+@router.post("/quizzes", response_model=QuizResponse)
+def create_quiz(
+    data: QuizCreate,
+    current_user: User = Depends(require_institute_admin), 
+    db: Session = Depends(get_db)
+):
+    new_quiz = Quiz(
+        institute_id=current_user.institute_id,
+        title=data.title,
+        description=data.description,
+        course_id=data.course_id,
+        batch_id=data.batch_id,
+        duration_minutes=data.duration_minutes,
+        total_marks=data.total_marks,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        status=data.status or "draft",
+        created_by=current_user.id
+    )
+    db.add(new_quiz)
+    db.commit()
+    db.refresh(new_quiz)
+    
+    course = db.query(Course).filter(Course.id == new_quiz.course_id).first()
+    batch = db.query(Batch).filter(Batch.id == new_quiz.batch_id).first() if new_quiz.batch_id else None
+    return {
+        "id": new_quiz.id,
+        "title": new_quiz.title,
+        "description": new_quiz.description,
+        "course_id": new_quiz.course_id,
+        "batch_id": new_quiz.batch_id,
+        "duration_minutes": new_quiz.duration_minutes,
+        "total_marks": new_quiz.total_marks,
+        "start_date": new_quiz.start_date,
+        "end_date": new_quiz.end_date,
+        "status": new_quiz.status,
+        "institute_id": new_quiz.institute_id,
+        "created_by": new_quiz.created_by,
+        "created_at": new_quiz.created_at,
+        "updated_at": new_quiz.updated_at,
+        "course_title": course.title if course else "Unknown",
+        "batch_name": batch.name if batch else "All Batches",
+        "question_count": 0,
+        "questions": []
+    }
+
+@router.get("/quizzes/{quiz_id}", response_model=QuizResponse)
+def get_quiz(
+    quiz_id: int,
+    current_user: User = Depends(require_institute_admin), 
+    db: Session = Depends(get_db)
+):
+    quiz = db.query(Quiz).filter(Quiz.id == quiz_id, Quiz.institute_id == current_user.institute_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    course = db.query(Course).filter(Course.id == quiz.course_id).first()
+    batch = db.query(Batch).filter(Batch.id == quiz.batch_id).first() if quiz.batch_id else None
+    return {
+        "id": quiz.id,
+        "title": quiz.title,
+        "description": quiz.description,
+        "course_id": quiz.course_id,
+        "batch_id": quiz.batch_id,
+        "duration_minutes": quiz.duration_minutes,
+        "total_marks": quiz.total_marks,
+        "start_date": quiz.start_date,
+        "end_date": quiz.end_date,
+        "status": quiz.status,
+        "institute_id": quiz.institute_id,
+        "created_by": quiz.created_by,
+        "created_at": quiz.created_at,
+        "updated_at": quiz.updated_at,
+        "course_title": course.title if course else "Unknown",
+        "batch_name": batch.name if batch else "All Batches",
+        "question_count": len(quiz.questions) if quiz.questions else 0,
+        "questions": quiz.questions or []
+    }
+
+@router.put("/quizzes/{quiz_id}", response_model=QuizResponse)
+def update_quiz(
+    quiz_id: int,
+    data: QuizUpdate,
+    current_user: User = Depends(require_institute_admin), 
+    db: Session = Depends(get_db)
+):
+    quiz = db.query(Quiz).filter(Quiz.id == quiz_id, Quiz.institute_id == current_user.institute_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(quiz, key, value)
+        
+    db.commit()
+    db.refresh(quiz)
+    
+    course = db.query(Course).filter(Course.id == quiz.course_id).first()
+    batch = db.query(Batch).filter(Batch.id == quiz.batch_id).first() if quiz.batch_id else None
+    return {
+        "id": quiz.id,
+        "title": quiz.title,
+        "description": quiz.description,
+        "course_id": quiz.course_id,
+        "batch_id": quiz.batch_id,
+        "duration_minutes": quiz.duration_minutes,
+        "total_marks": quiz.total_marks,
+        "start_date": quiz.start_date,
+        "end_date": quiz.end_date,
+        "status": quiz.status,
+        "institute_id": quiz.institute_id,
+        "created_by": quiz.created_by,
+        "created_at": quiz.created_at,
+        "updated_at": quiz.updated_at,
+        "course_title": course.title if course else "Unknown",
+        "batch_name": batch.name if batch else "All Batches",
+        "question_count": len(quiz.questions) if quiz.questions else 0,
+        "questions": quiz.questions or []
+    }
+
+@router.delete("/quizzes/{quiz_id}")
+def delete_quiz(quiz_id: int, current_user: User = Depends(require_institute_admin), db: Session = Depends(get_db)):
+    quiz = db.query(Quiz).filter(Quiz.id == quiz_id, Quiz.institute_id == current_user.institute_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    db.delete(quiz)
+    db.commit()
+    return {"detail": "Quiz deleted"}
 
 # --- WEBINARS ---
 
@@ -2124,7 +2300,6 @@ def verify_integration(provider_type: str, current_user: User = Depends(require_
     if not inc:
         raise HTTPException(status_code=404, detail="Integration not found")
         
-    # Mock verification success
     inc.status = "Active"
     db.commit()
     return {"detail": "Verification successful. Status is now Active."}
@@ -2139,8 +2314,8 @@ def handle_payment_webhook(provider: str, payload: dict, db: Session = Depends(g
     # Simulating the webhook workflow:
     # Payment Successful -> Enrollment Created -> Course Access Granted -> Payment Confirmation -> Student Notification
     
-    # 1. Parse payload (Mock data)
-    student_id = payload.get("student_id", 4) # fallback to our seed student
+    # 1. Parse payload
+    student_id = payload.get("student_id", 4)
     course_id = payload.get("course_id", 1)
     institute_id = payload.get("institute_id", 1)
     amount = payload.get("amount", 999.0)

@@ -240,49 +240,61 @@ export const Materials: React.FC = () => {
         </Card>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {materials.map((mat) => {
-          const Icon = getIconForType(mat.material_type);
-          return (
-            <Card key={mat.id}>
-              <CardContent className="p-5 flex gap-4 items-center">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-950/40 border border-violet-500/20 text-violet-400">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-1.5 py-0.2 rounded uppercase">
-                    {mat.course_title}
-                  </span>
-                  <h3 className="text-sm font-bold text-slate-200 truncate mt-1">{mat.title}</h3>
-                  <p className="text-xs text-slate-500 font-medium">{mat.material_type} • {mat.batch_name}</p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {mat.file_url && (
+      {materials.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-3">
+              <FileText className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No study materials published</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">Publish notes, slide decks, handouts, and video references for your batches.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {materials.map((mat) => {
+            const Icon = getIconForType(mat.material_type);
+            return (
+              <Card key={mat.id}>
+                <CardContent className="p-5 flex gap-4 items-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-950/40 border border-violet-500/20 text-violet-400">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-1.5 py-0.2 rounded uppercase">
+                      {mat.course_title}
+                    </span>
+                    <h3 className="text-sm font-bold text-slate-200 truncate mt-1">{mat.title}</h3>
+                    <p className="text-xs text-slate-500 font-medium">{mat.material_type} • {mat.batch_name}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {mat.file_url && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`http://localhost:8000${mat.file_url}`, '_blank')}
+                        className="text-slate-400 hover:text-slate-250 cursor-pointer p-1.5"
+                        aria-label="Download material"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => window.open(`http://localhost:8000${mat.file_url}`, '_blank')}
-                      className="text-slate-400 hover:text-slate-250 cursor-pointer p-1.5"
-                      aria-label="Download material"
+                      onClick={() => handleDelete(mat.id)}
+                      className="text-rose-450 hover:text-rose-350 cursor-pointer p-1.5"
+                      aria-label="Delete material"
                     >
-                      <Download className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(mat.id)}
-                    className="text-rose-450 hover:text-rose-350 cursor-pointer p-1.5"
-                    aria-label="Delete material"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -64,7 +64,7 @@ class WorkflowEngine:
                 if student and course and student not in course.students:
                     course.students.append(student)
         elif action_type == "Send Email":
-            print(f"Mock Action: Sending Email to student_id {event_payload.get('student_id')} using template {action_payload.get('template')}")
+            logger.info(f"Dispatching Email notification to student_id {event_payload.get('student_id')} using template {action_payload.get('template')}")
         else:
-            print(f"Workflow Action executed: {action_type}")
+            logger.info(f"Workflow Action executed: {action_type}")
 

@@ -24,6 +24,10 @@ export const teacherApi = {
     const response = await api.get('/teacher/courses');
     return response.data;
   },
+  createCourse: async (data: any) => {
+    const response = await api.post('/teacher/courses', data);
+    return response.data;
+  },
   getCourse: async (id: number) => {
     const response = await api.get(`/teacher/courses/${id}`);
     return response.data;

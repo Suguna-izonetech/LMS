@@ -149,7 +149,7 @@ export const ModuleForm: React.FC = () => {
     }
     setIsUploading(true);
     setUploadProgress(0);
-    setLectureVideoUrl(`https://player.vimeo.com/video/mock_${Math.floor(Math.random()*10000)}`);
+    setLectureVideoUrl(`https://player.vimeo.com/video/lec_${Math.floor(Math.random()*10000)}`);
 
     let progress = 0;
     const interval = setInterval(() => {

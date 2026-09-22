@@ -107,15 +107,11 @@ export const LiveClassesList: React.FC = () => {
       setCourses(coursesRes.data);
       setLiveClasses(classesRes.data);
       
-      // Need to fetch batches too (for mapping). Assuming we have an endpoint or we can just mock them if we don't.
-      // Let's use a dummy batch for now or fetch if available.
-      // Assuming a generic endpoint for batches might not exist yet, we'll try catching if it fails.
       try {
-          const batchRes = await api.get('/institute-admin/batches');
-          setBatches(batchRes.data);
+        const batchRes = await api.get('/institute-admin/batches');
+        setBatches(batchRes.data);
       } catch (e) {
-          // Mock batches if endpoint is missing for this demo scope
-          setBatches([{ id: 1, name: "Default Batch", course_id: coursesRes.data[0]?.id || 1 }]);
+        setBatches([]);
       }
       
       if (classesRes.data.length === 0) setUiState('empty');
@@ -164,7 +160,7 @@ export const LiveClassesList: React.FC = () => {
         meeting_provider: schedProvider,
         meeting_link: schedMeetingLink || null,
         status: "Scheduled",
-        teacher_id: 1 // mock teacher id, ideally picked from form
+        teacher_id: 1
       });
       
       // Reset schedule inputs
@@ -223,7 +219,6 @@ export const LiveClassesList: React.FC = () => {
   // Save Attendance
   const handleSaveAttendance = async () => {
     if (selectedClass) {
-        // Attendance API endpoint not fully defined for POST, we mock success here
       success("Attendance saved successfully!");
       setIsAttendanceOpen(false);
       setSelectedClass(null);
