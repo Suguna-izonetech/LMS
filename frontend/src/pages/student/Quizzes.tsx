@@ -196,7 +196,9 @@ export const Quizzes: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="space-y-4">
+        <h2 className="font-display text-xl font-bold text-slate-100">Quizzes</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quizzes.map((quiz) => (
           <Card key={quiz.id} className="hover:border-sky-500/40 transition-all flex flex-col justify-between">
             <CardHeader>
@@ -252,7 +254,8 @@ export const Quizzes: React.FC = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      </section>
     </div>
   );
 };

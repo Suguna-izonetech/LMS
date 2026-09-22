@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, KeyRound, Bell, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
@@ -13,7 +13,14 @@ export const StudentSettings: React.FC = () => {
 
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    setUsername(user?.username || '');
+    setEmail(user?.email || '');
+  }, [user]);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +63,8 @@ export const StudentSettings: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Username" value={user?.username || ''} disabled />
-              <Input label="Email Address" value={user?.email || ''} disabled />
+              <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           </CardContent>
         </Card>

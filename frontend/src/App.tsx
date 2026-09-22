@@ -83,9 +83,12 @@ const StudentMyCourses = lazy(() => import('./pages/student/MyCourses'));
 const StudentLiveClasses = lazy(() => import('./pages/student/LiveClasses'));
 const StudentStudyMaterials = lazy(() => import('./pages/student/StudyMaterials'));
 const StudentQuizzes = lazy(() => import('./pages/student/Quizzes'));
+const StudentMainExams = lazy(() => import('./pages/student/MainExams'));
 const StudentTasks = lazy(() => import('./pages/student/Tasks'));
 const StudentCertificates = lazy(() => import('./pages/student/Certificates'));
 const StudentSettings = lazy(() => import('./pages/student/Settings'));
+const StudentNewsfeed = lazy(() => import('./pages/student/Newsfeed'));
+const StudentFeedback = lazy(() => import('./pages/student/Feedback'));
 
 // Platform Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -123,9 +126,10 @@ function App() {
                         <Route path="/student/learning/materials" element={<StudentStudyMaterials />} />
                         <Route path="/student/assessments/quizzes" element={<StudentQuizzes />} />
                         <Route path="/student/assessments/tasks" element={<StudentTasks />} />
+                        <Route path="/student/assessments/main-exams" element={<StudentMainExams />} />
                         <Route path="/student/certificates" element={<StudentCertificates />} />
-                        <Route path="/student/newsfeed" element={<TeacherNewsfeed />} />
-                        <Route path="/student/chat" element={<TeacherChat />} />
+                        <Route path="/student/newsfeed" element={<StudentNewsfeed />} />
+                        <Route path="/student/feedback" element={<StudentFeedback />} />
                         <Route path="/student/settings" element={<StudentSettings />} />
                       </Route>
                     </Route>

@@ -75,11 +75,12 @@ export const StudentLayout: React.FC = () => {
       subItems: [
         { name: 'Quizzes', path: '/student/assessments/quizzes', icon: HelpCircle },
         { name: 'Tasks & Assignments', path: '/student/assessments/tasks', icon: CheckSquare },
+        { name: 'Main Exams', path: '/student/assessments/main-exams', icon: Award },
       ]
     },
     { name: 'My Certificates', path: '/student/certificates', icon: Award },
-    { name: 'Newsfeed', path: '/student/newsfeed', icon: Share2 },
-    { name: 'One-to-One Chat', path: '/student/chat', icon: MessageSquare },
+    { name: 'News', path: '/student/newsfeed', icon: Share2 },
+    { name: 'Feedback', path: '/student/feedback', icon: MessageSquare },
     { name: 'Settings', path: '/student/settings', icon: Settings },
   ];
 

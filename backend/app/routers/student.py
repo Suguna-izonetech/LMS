@@ -2,14 +2,16 @@ from datetime import datetime, date
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from pydantic import BaseModel
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session, joinedload
 from app.db.database import get_db
 from app.models.all_models import (
-    User, Course, Batch, Student, LiveClass, 
+    User, Role, Course, Batch, Student, LiveClass, 
     LiveClassAttendance, Book, StudyMaterial, Quiz, QuizQuestion, 
     QuizOption, QuizAttempt, QuizAnswer, Task, TaskAttachment, 
-    TaskSubmission, Webinar, CertificateRecord, UserNotification
+    TaskSubmission, Webinar, CertificateRecord, UserNotification, NewsfeedPost,
+    PrerecordedModule, Lecture, StudentLessonCompletion, TeacherFeedback,
+    InstituteAdminFeedback
 )
 from app.core.dependencies import get_current_user, require_role
 
@@ -27,6 +29,15 @@ class QuizSubmitPayload(BaseModel):
 class TaskSubmissionCreate(BaseModel):
     file_url: str
 
+class FeedbackCreate(BaseModel):
+    message: str
+    course_id: Optional[int] = None
+    teacher_id: Optional[int] = None
+    strict_mode: bool = False
+
+class LessonCompletionCreate(BaseModel):
+    lecture_id: int
+
 # --- HELPER UTILITY ---
 
 def get_student_entity(db: Session, current_user: User) -> Optional[Student]:
@@ -37,10 +48,40 @@ def get_student_entity(db: Session, current_user: User) -> Optional[Student]:
 
 def get_student_courses(db: Session, current_user: User) -> List[Course]:
     student_obj = get_student_entity(db, current_user)
-    if student_obj and student_obj.courses:
-        return student_obj.courses
-    # Fallback to all published courses in current institute for demonstration/enrollment
-    return db.query(Course).all()
+    return list(student_obj.courses) if student_obj else []
+
+def get_or_create_student(db: Session, current_user: User) -> Student:
+    student_obj = get_student_entity(db, current_user)
+    if not student_obj:
+        student_obj = Student(name=current_user.username, email=current_user.email, performance="Good")
+        db.add(student_obj)
+        db.flush()
+    return student_obj
+
+def get_lesson_progress(db: Session, student_obj: Student, courses: List[Course]) -> dict:
+    course_ids = [course.id for course in courses]
+    total_lessons = db.query(Lecture).join(PrerecordedModule).filter(
+        PrerecordedModule.course_id.in_(course_ids),
+        PrerecordedModule.status == "Published",
+        Lecture.status == "Published"
+    ).count() if course_ids else 0
+    completed_lessons = db.query(StudentLessonCompletion).join(StudentLessonCompletion.lecture).join(
+        Lecture.module
+    ).filter(
+        StudentLessonCompletion.student_id == student_obj.id,
+        PrerecordedModule.course_id.in_(course_ids),
+        PrerecordedModule.status == "Published",
+        Lecture.status == "Published"
+    ).count() if course_ids else 0
+    progress_pct = round((completed_lessons / total_lessons) * 100, 2) if total_lessons else 0
+    return {
+        "completed_lessons": completed_lessons,
+        "total_lessons": total_lessons,
+        "progress_pct": progress_pct,
+        "feedback_unlocked": progress_pct >= 30,
+        "feedback_session_available": progress_pct >= 70,
+        "strict_mode": progress_pct >= 70
+    }
 
 # --- STUDENT API ENDPOINTS ---
 
@@ -128,6 +169,7 @@ def get_my_courses(
     db: Session = Depends(get_db)
 ):
     courses = get_student_courses(db, current_user)
+    student_obj = get_or_create_student(db, current_user)
     result = []
     for c in courses:
         modules_count = len(c.prerecorded_modules) if hasattr(c, 'prerecorded_modules') else 0
@@ -138,12 +180,35 @@ def get_my_courses(
             "title": c.title,
             "code": c.code,
             "description": c.description,
-            "progress_pct": 45,
+            "progress_pct": get_lesson_progress(db, student_obj, [c])["progress_pct"],
             "modules_count": modules_count,
             "quizzes_count": quizzes_count,
             "tasks_count": tasks_count
         })
     return result
+
+@router.get("/available-courses")
+def get_available_courses(
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    enrolled_ids = {course.id for course in get_student_courses(db, current_user)}
+    query = db.query(Course).filter(Course.status == "Published")
+    if current_user.institute_id:
+        query = query.filter(Course.institute_id == current_user.institute_id)
+    return [
+        {
+            "id": course.id,
+            "title": course.title,
+            "code": course.code,
+            "description": course.description,
+            "modules_count": len(getattr(course, "prerecorded_modules", [])),
+            "quizzes_count": len(course.quizzes),
+            "tasks_count": len(course.tasks)
+        }
+        for course in query.order_by(Course.title.asc()).all()
+        if course.id not in enrolled_ids
+    ]
 
 @router.get("/courses/{course_id}")
 def get_course_detail(
@@ -151,7 +216,7 @@ def get_course_detail(
     current_user: User = Depends(require_role("student")),
     db: Session = Depends(get_db)
 ):
-    course = db.query(Course).filter(Course.id == course_id).first()
+    course = db.query(Course).filter(Course.id == course_id, Course.status == "Published").first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
         
@@ -208,7 +273,10 @@ def get_student_live_classes(
     classes = db.query(LiveClass).options(
         joinedload(LiveClass.course), 
         joinedload(LiveClass.batch)
-    ).filter(LiveClass.course_id.in_(course_ids)).order_by(LiveClass.scheduled_date.asc()).all()
+    ).filter(
+        LiveClass.course_id.in_(course_ids),
+        LiveClass.status != "cancelled"
+    ).order_by(LiveClass.scheduled_date.asc()).all()
     return [
         {
             "id": c.id,
@@ -218,8 +286,7 @@ def get_student_live_classes(
             "description": c.description,
             "scheduled_date": c.scheduled_date.isoformat(),
             "status": c.status,
-            "meeting_link": c.meeting_link,
-            "recording_url": c.recording_url
+            "meeting_link": c.meeting_link
         }
         for c in classes
     ]
@@ -243,6 +310,12 @@ def get_student_materials(
         Course.id.in_(course_ids),
         Book.status == "published"
     ).distinct().all()
+
+    recordings = db.query(LiveClass).options(joinedload(LiveClass.course)).filter(
+        LiveClass.course_id.in_(course_ids),
+        LiveClass.recording_url.isnot(None),
+        LiveClass.status != "cancelled"
+    ).order_by(LiveClass.scheduled_date.desc()).all()
     
     return {
         "study_materials": [
@@ -265,6 +338,16 @@ def get_student_materials(
                 "file_url": b.file_url
             }
             for b in books
+        ],
+        "recordings": [
+            {
+                "id": recording.id,
+                "title": recording.title,
+                "course_title": recording.course.title,
+                "file_url": recording.recording_url,
+                "recorded_at": recording.scheduled_date.isoformat()
+            }
+            for recording in recordings
         ]
     }
 
@@ -302,6 +385,35 @@ def get_student_quizzes(
             "attempt_status": attempt_map[q.id].status if q.id in attempt_map else "unattempted"
         }
         for q in quizzes
+    ]
+
+@router.get("/main-exams")
+def get_student_main_exams(
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    course_ids = [course.id for course in get_student_courses(db, current_user)]
+    if not course_ids:
+        return []
+
+    exams = db.query(Quiz).options(joinedload(Quiz.course)).join(
+        User, Quiz.created_by == User.id
+    ).filter(
+        Quiz.course_id.in_(course_ids),
+        Quiz.status == "published",
+        User.roles.any(Role.name.in_({"Admin", "PlatformAdmin", "SuperAdmin", "admin", "platformadmin", "superadmin"}))
+    ).all()
+    return [
+        {
+            "id": exam.id,
+            "title": exam.title,
+            "description": exam.description,
+            "course_title": exam.course.title,
+            "duration_minutes": exam.duration_minutes,
+            "total_marks": exam.total_marks,
+            "attempted": False
+        }
+        for exam in exams
     ]
 
 @router.get("/quizzes/{quiz_id}")
@@ -476,3 +588,118 @@ def get_student_certificates(
         }
         for r in records
     ]
+
+@router.get("/lesson-progress")
+def get_student_lesson_progress(
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    student_obj = get_or_create_student(db, current_user)
+    return get_lesson_progress(db, student_obj, get_student_courses(db, current_user))
+
+@router.post("/lessons/{lecture_id}/complete")
+def complete_student_lesson(
+    lecture_id: int,
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    student_obj = get_or_create_student(db, current_user)
+    enrolled_course_ids = {course.id for course in get_student_courses(db, current_user)}
+    lecture = db.query(Lecture).join(PrerecordedModule).filter(
+        Lecture.id == lecture_id,
+        PrerecordedModule.course_id.in_(enrolled_course_ids),
+        PrerecordedModule.status == "Published",
+        Lecture.status == "Published"
+    ).first() if enrolled_course_ids else None
+    if not lecture:
+        raise HTTPException(status_code=404, detail="Lesson not found in your enrolled courses")
+
+    completion = db.query(StudentLessonCompletion).filter(
+        StudentLessonCompletion.student_id == student_obj.id,
+        StudentLessonCompletion.lecture_id == lecture_id
+    ).first()
+    if not completion:
+        db.add(StudentLessonCompletion(student_id=student_obj.id, lecture_id=lecture_id))
+        db.commit()
+    return get_lesson_progress(db, student_obj, get_student_courses(db, current_user))
+
+@router.get("/newsfeed")
+def get_student_newsfeed(
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    posts = db.query(NewsfeedPost).options(joinedload(NewsfeedPost.author)).filter(
+        NewsfeedPost.institute_id == current_user.institute_id
+    ).order_by(NewsfeedPost.created_at.desc()).all()
+    visible_posts = []
+    for post in posts:
+        author_roles = {role.name.lower() for role in post.author.roles} if post.author else set()
+        if author_roles.intersection({"teacher", "instructor", "faculty", "admin", "instituteadmin"}):
+            visible_posts.append({
+                "id": post.id,
+                "title": post.title,
+                "content": post.content,
+                "type": post.type,
+                "file_url": post.file_url,
+                "author_name": post.author.name or post.author.username if post.author else "Institute",
+                "created_at": post.created_at.isoformat()
+            })
+    return visible_posts
+
+@router.get("/feedback/status")
+def get_student_feedback_status(
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    student_obj = get_or_create_student(db, current_user)
+    return get_lesson_progress(db, student_obj, get_student_courses(db, current_user))
+
+@router.post("/feedback/teacher")
+def submit_teacher_feedback(
+    payload: FeedbackCreate,
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    if not payload.message.strip():
+        raise HTTPException(status_code=400, detail="Feedback message is required")
+    student_obj = get_or_create_student(db, current_user)
+    enrolled_ids = {course.id for course in get_student_courses(db, current_user)}
+    if payload.course_id and payload.course_id not in enrolled_ids:
+        raise HTTPException(status_code=403, detail="Course is not enrolled")
+    feedback = TeacherFeedback(
+        student_id=student_obj.id,
+        course_id=payload.course_id,
+        teacher_id=payload.teacher_id,
+        message=payload.message.strip()
+    )
+    db.add(feedback)
+    db.commit()
+    return {"id": feedback.id, "status": feedback.status}
+
+@router.post("/feedback/institute-admin")
+def submit_institute_admin_feedback(
+    payload: FeedbackCreate,
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    if not payload.message.strip():
+        raise HTTPException(status_code=400, detail="Feedback message is required")
+    student_obj = get_or_create_student(db, current_user)
+    courses = get_student_courses(db, current_user)
+    progress = get_lesson_progress(db, student_obj, courses)
+    if not progress["feedback_unlocked"]:
+        raise HTTPException(status_code=403, detail="Institute Admin Feedback unlocks at 30% lesson completion")
+    enrolled_ids = {course.id for course in courses}
+    if payload.course_id and payload.course_id not in enrolled_ids:
+        raise HTTPException(status_code=403, detail="Course is not enrolled")
+    if progress["strict_mode"] and not payload.strict_mode:
+        raise HTTPException(status_code=403, detail="Feedback Session requires Strict Mode")
+    feedback = InstituteAdminFeedback(
+        student_id=student_obj.id,
+        course_id=payload.course_id,
+        message=payload.message.strip(),
+        session_mode="strict" if progress["strict_mode"] else "standard"
+    )
+    db.add(feedback)
+    db.commit()
+    return {"id": feedback.id, "status": feedback.status, "session_mode": feedback.session_mode}

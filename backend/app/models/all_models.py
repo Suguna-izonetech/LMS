@@ -146,6 +146,7 @@ class Course(Base):
     tasks = relationship("Task", back_populates="course", cascade="all, delete-orphan")
     webinars = relationship("Webinar", back_populates="course", cascade="all, delete-orphan")
     books = relationship("Book", secondary=course_books, back_populates="courses")
+    prerecorded_modules = relationship("PrerecordedModule", back_populates="course", cascade="all, delete-orphan")
 
 class Batch(Base):
     __tablename__ = "batches"
@@ -179,6 +180,9 @@ class Student(Base):
     courses = relationship("Course", secondary=student_courses, back_populates="students")
     quiz_attempts = relationship("QuizAttempt", back_populates="student", cascade="all, delete-orphan")
     task_submissions = relationship("TaskSubmission", back_populates="student", cascade="all, delete-orphan")
+    lesson_completions = relationship("StudentLessonCompletion", back_populates="student", cascade="all, delete-orphan")
+    teacher_feedback = relationship("TeacherFeedback", back_populates="student", cascade="all, delete-orphan")
+    institute_feedback = relationship("InstituteAdminFeedback", back_populates="student", cascade="all, delete-orphan")
 
 class LiveClass(Base):
     __tablename__ = "live_classes"
@@ -561,7 +565,7 @@ class PrerecordedModule(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    course = relationship('Course')
+    course = relationship('Course', back_populates='prerecorded_modules')
     lectures = relationship('Lecture', back_populates='module', cascade='all, delete-orphan')
 
 class Lecture(Base):
@@ -577,6 +581,50 @@ class Lecture(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     module = relationship('PrerecordedModule', back_populates='lectures')
+
+
+class StudentLessonCompletion(Base):
+    __tablename__ = "student_lesson_completions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    lecture_id = Column(Integer, ForeignKey("lectures.id", ondelete="CASCADE"), nullable=False, index=True)
+    completed_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("student_id", "lecture_id", name="uq_student_lesson_completion"),)
+
+    student = relationship("Student", back_populates="lesson_completions")
+    lecture = relationship("Lecture")
+
+
+class TeacherFeedback(Base):
+    __tablename__ = "teacher_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    message = Column(String(2000), nullable=False)
+    status = Column(String(50), default="open")
+    response = Column(String(2000), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    student = relationship("Student", back_populates="teacher_feedback")
+
+
+class InstituteAdminFeedback(Base):
+    __tablename__ = "institute_admin_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    message = Column(String(2000), nullable=False)
+    status = Column(String(50), default="open")
+    response = Column(String(2000), nullable=True)
+    session_mode = Column(String(50), default="standard")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    student = relationship("Student", back_populates="institute_feedback")
 
 class Consultation(Base):
     __tablename__ = "consultations"

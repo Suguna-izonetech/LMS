@@ -21,9 +21,18 @@ interface BookItem {
   file_url: string;
 }
 
+interface RecordingItem {
+  id: number;
+  title: string;
+  course_title: string;
+  file_url: string;
+  recorded_at: string;
+}
+
 export const StudyMaterials: React.FC = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [books, setBooks] = useState<BookItem[]>([]);
+  const [recordings, setRecordings] = useState<RecordingItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,6 +45,7 @@ export const StudyMaterials: React.FC = () => {
       const res = await api.get('/student/materials');
       setMaterials(res.data.study_materials || []);
       setBooks(res.data.books || []);
+      setRecordings(res.data.recordings || []);
     } catch (err) {
       console.error('Error fetching materials', err);
     } finally {
@@ -118,6 +128,35 @@ export const StudyMaterials: React.FC = () => {
                   rel="noopener noreferrer"
                   className="p-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-400 transition-colors border border-slate-800"
                   title="Read E-Book"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-rose-400" />
+          <span>Class Recordings</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {recordings.map((recording) => (
+            <Card key={recording.id} className="hover:border-rose-500/40 transition-all">
+              <CardContent className="p-5 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-xs text-rose-400 font-semibold">{recording.course_title}</span>
+                  <h3 className="text-base font-bold text-slate-100">{recording.title}</h3>
+                  <p className="text-xs text-slate-500">{new Date(recording.recorded_at).toLocaleDateString()}</p>
+                </div>
+                <a
+                  href={recording.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-400 transition-colors border border-slate-800"
+                  title="Watch class recording"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </a>

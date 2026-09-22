@@ -13,7 +13,6 @@ interface LiveClass {
   scheduled_date: string;
   status: string;
   meeting_link: string;
-  recording_url: string;
 }
 
 export const LiveClasses: React.FC = () => {
@@ -44,10 +43,10 @@ export const LiveClasses: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-          Live Classes & Recordings
+          Live Classes
         </h1>
         <p className="text-sm text-slate-400">
-          Join scheduled interactive video sessions or watch recorded lectures.
+          Join your scheduled interactive class sessions.
         </p>
       </div>
 
@@ -55,7 +54,6 @@ export const LiveClasses: React.FC = () => {
         {classes.map((cls) => {
           const classDate = new Date(cls.scheduled_date);
           const isUpcoming = cls.status === 'upcoming';
-          const isCompleted = cls.status === 'completed';
 
           return (
             <Card key={cls.id} className="hover:border-sky-500/40 transition-all">
@@ -101,17 +99,6 @@ export const LiveClasses: React.FC = () => {
                     </a>
                   )}
 
-                  {cls.recording_url && (
-                    <a
-                      href={cls.recording_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 transition-all"
-                    >
-                      <Video className="h-4 w-4 text-sky-400" />
-                      <span>Watch Recording</span>
-                    </a>
-                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BookOpen, Video, HelpCircle, CheckSquare, Award, ArrowRight, Play, Clock, Sparkles } from 'lucide-react';
 import api from '../../api/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
@@ -23,7 +22,6 @@ interface DashboardData {
 }
 
 export const StudentDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +48,7 @@ export const StudentDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Hero Welcome Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 border border-sky-800/30 p-6 md:p-8 shadow-xl shadow-sky-950/20 relative overflow-hidden">
+      <div className="rounded-2xl bg-linear-to-r from-sky-950 via-slate-900 to-indigo-950 border border-sky-800/30 p-6 md:p-8 shadow-xl shadow-sky-950/20 relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 opacity-10 pointer-events-none">
           <Sparkles className="h-64 w-64 text-sky-400" />
         </div>
@@ -70,7 +68,7 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:border-sky-500/40 transition-all cursor-pointer" onClick={() => navigate('/student/courses')}>
+        <Card className="hover:border-sky-500/40 transition-all">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Enrolled Courses</p>
@@ -82,7 +80,7 @@ export const StudentDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:border-sky-500/40 transition-all cursor-pointer" onClick={() => navigate('/student/learning/live-classes')}>
+        <Card className="hover:border-sky-500/40 transition-all">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Upcoming Classes</p>
@@ -94,7 +92,7 @@ export const StudentDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:border-sky-500/40 transition-all cursor-pointer" onClick={() => navigate('/student/assessments/tasks')}>
+        <Card className="hover:border-sky-500/40 transition-all">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Pending Tasks</p>
@@ -106,7 +104,7 @@ export const StudentDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:border-sky-500/40 transition-all cursor-pointer" onClick={() => navigate('/student/certificates')}>
+        <Card className="hover:border-sky-500/40 transition-all">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Certificates Earned</p>
@@ -132,7 +130,7 @@ export const StudentDashboard: React.FC = () => {
                 </CardTitle>
                 <CardDescription>Scheduled interactive class sessions</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/student/learning/live-classes')} className="text-sky-400 hover:text-sky-300">
+              <Button variant="ghost" size="sm" className="text-sky-400 hover:text-sky-300" disabled>
                 View All
               </Button>
             </CardHeader>
@@ -184,10 +182,7 @@ export const StudentDashboard: React.FC = () => {
               <CardDescription>Shortcuts to active learning tools</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <button
-                onClick={() => navigate('/student/assessments/quizzes')}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-sky-500/40 text-left transition-all group cursor-pointer"
-              >
+              <div className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400">
                     <HelpCircle className="h-4.5 w-4.5" />
@@ -197,13 +192,10 @@ export const StudentDashboard: React.FC = () => {
                     <p className="text-[11px] text-slate-500">Practice questions & assessments</p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <ArrowRight className="h-4 w-4 text-slate-600" />
+              </div>
 
-              <button
-                onClick={() => navigate('/student/learning/materials')}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-sky-500/40 text-left transition-all group cursor-pointer"
-              >
+              <div className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
                     <BookOpen className="h-4.5 w-4.5" />
@@ -213,13 +205,10 @@ export const StudentDashboard: React.FC = () => {
                     <p className="text-[11px] text-slate-500">Download handouts & e-books</p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <ArrowRight className="h-4 w-4 text-slate-600" />
+              </div>
 
-              <button
-                onClick={() => navigate('/student/assessments/tasks')}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-sky-500/40 text-left transition-all group cursor-pointer"
-              >
+              <div className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
                     <CheckSquare className="h-4.5 w-4.5" />
@@ -229,8 +218,8 @@ export const StudentDashboard: React.FC = () => {
                     <p className="text-[11px] text-slate-500">Upload solutions before deadline</p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <ArrowRight className="h-4 w-4 text-slate-600" />
+              </div>
             </CardContent>
           </Card>
         </div>

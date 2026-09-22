@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Layers, CheckCircle2, Clock } from 'lucide-react';
+import { BookOpen, ExternalLink } from 'lucide-react';
 import api from '../../api/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { LoadingState } from '../../components/ui/LoadingState';
@@ -15,8 +15,12 @@ interface StudentCourse {
   tasks_count: number;
 }
 
+type CourseList = StudentCourse[];
+
 export const MyCourses: React.FC = () => {
   const [courses, setCourses] = useState<StudentCourse[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<CourseList>([]);
+  const [showAvailable, setShowAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,6 +39,18 @@ export const MyCourses: React.FC = () => {
     }
   };
 
+  const browseAvailableCourses = async () => {
+    if (!showAvailable && availableCourses.length === 0) {
+      try {
+        const res = await api.get('/student/available-courses');
+        setAvailableCourses(res.data);
+      } catch (err) {
+        console.error('Error fetching available courses', err);
+      }
+    }
+    setShowAvailable(prev => !prev);
+  };
+
   if (loading) {
     return <LoadingState message="Loading your enrolled courses..." />;
   }
@@ -42,12 +58,20 @@ export const MyCourses: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-          My Enrolled Courses
-        </h1>
-        <p className="text-sm text-slate-400">
-          Access your active courses, lectures, modules, and learning progress.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">My Enrolled Courses</h1>
+            <p className="text-sm text-slate-400">Access your active courses, lectures, modules, and learning progress.</p>
+          </div>
+          <button
+            type="button"
+            onClick={browseAvailableCourses}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-300 hover:bg-sky-500/20"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span>{showAvailable ? 'Hide Available Courses' : 'Available Courses'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -77,7 +101,7 @@ export const MyCourses: React.FC = () => {
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-900 overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300"
+                    className="h-full bg-linear-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300"
                     style={{ width: `${course.progress_pct}%` }}
                   />
                 </div>
@@ -102,6 +126,33 @@ export const MyCourses: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {showAvailable && (
+        <section className="space-y-4 border-t border-slate-900 pt-6">
+          <div>
+            <h2 className="font-display text-xl font-bold text-slate-100">Available Courses</h2>
+            <p className="text-sm text-slate-400">Browse published courses that are not part of your enrollment.</p>
+          </div>
+          {availableCourses.length === 0 ? (
+            <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 text-sm text-slate-500">No additional courses are currently available.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {availableCourses.map((course) => (
+                <Card key={course.id} className="flex flex-col justify-between border-slate-800">
+                  <CardHeader>
+                    <span className="inline-block w-fit rounded-md bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[11px] font-bold text-emerald-400">{course.code}</span>
+                    <CardTitle className="text-lg font-bold text-slate-100">{course.title}</CardTitle>
+                    <CardDescription className="line-clamp-3 text-xs text-slate-400">{course.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0 text-xs text-slate-500">
+                    {course.modules_count} modules, {course.quizzes_count} quizzes, {course.tasks_count} tasks
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 };
