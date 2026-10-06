@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, ArrowLeft, Upload, Image as ImageIcon } from 'lucide-react';
+import { Save, ArrowLeft, Upload, Image as ImageIcon, Calendar, Clock, DollarSign, UserCheck } from 'lucide-react';
 import api from '../api/client';
 import {
   PageHeader,
@@ -32,6 +32,13 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
   const [type, setType] = useState('Online');
   const [visibility, setVisibility] = useState('Public');
   const [status, setStatus] = useState('Draft');
+  const [duration, setDuration] = useState('3 Months');
+  const [startDate, setStartDate] = useState('');
+  const [price, setPrice] = useState('0');
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
+
+  // Teachers for assignment
+  const [teachers, setTeachers] = useState<any[]>([]);
 
   // Validation States
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -40,6 +47,13 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
   const [isLoading, setIsLoading] = useState(mode === 'edit');
   const [isSaving, setIsSaving] = useState(false);
   const { success, error: showError } = useToast();
+
+  // Load teachers for course assignment
+  useEffect(() => {
+    api.get('/institute-admin/teachers')
+      .then(res => setTeachers(res.data))
+      .catch(err => console.error('Failed to load teachers', err));
+  }, []);
 
   // Prepopulate form on Edit mode
   useEffect(() => {
@@ -53,6 +67,14 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
           setType(data.course_type);
           setVisibility(data.visibility);
           setStatus(data.status);
+          setDuration(data.duration || '3 Months');
+          if (data.start_date) {
+            setStartDate(data.start_date.substring(0, 10));
+          }
+          setPrice(String(data.price ?? 0));
+          if (data.teachers && data.teachers.length > 0) {
+            setSelectedTeacherId(String(data.teachers[0].id));
+          }
           if (data.thumbnail_url) {
             setThumbnailPreview(`http://localhost:8000${data.thumbnail_url}`);
           }
@@ -104,6 +126,14 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
     formData.append('course_type', type);
     formData.append('visibility', visibility);
     formData.append('status', status);
+    formData.append('duration', duration);
+    if (startDate) {
+      formData.append('start_date', startDate);
+    }
+    formData.append('price', price);
+    if (selectedTeacherId) {
+      formData.append('teacher_ids', JSON.stringify([parseInt(selectedTeacherId)]));
+    }
     if (thumbnailFile) {
         formData.append('thumbnail', thumbnailFile);
     }
@@ -118,15 +148,15 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
-        setIsDirty(false);
-        success(`Course ${mode === 'create' ? 'created' : 'updated'} successfully`);
-        navigate('/institute-admin/courses');
-      } catch (err: any) {
-        console.error(err);
-        showError(err.response?.data?.detail || `Failed to ${mode} course`);
-      } finally {
-        setIsSaving(false);
-      }
+      setIsDirty(false);
+      success(`Course ${mode === 'create' ? 'created' : 'updated'} successfully`);
+      navigate('/institute-admin/courses');
+    } catch (err: any) {
+      console.error(err);
+      showError(err.response?.data?.detail || `Failed to ${mode} course`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBack = () => {
@@ -195,13 +225,54 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
                 {errors.code && <span className="text-xs font-semibold text-red-500">{errors.code}</span>}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Course Duration</span>
+                  </label>
+                  <Input
+                    value={duration}
+                    onChange={handleInputChange(setDuration)}
+                    placeholder="e.g. 3 Months, 12 Weeks"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-sky-400" />
+                    <span>Course Start Date</span>
+                  </label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={handleInputChange(setStartDate)}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Payment / Fee (USD)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={handleInputChange(setPrice)}
+                    placeholder="0.00 (0 for Free)"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-300">Course Description</label>
                 <textarea
                   value={description}
                   onChange={handleInputChange(setDescription)}
                   placeholder="Describe what students will learn, projects they will build, and prerequisites..."
-                  rows={6}
+                  rows={5}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
                 {errors.description && <span className="text-xs font-semibold text-red-500">{errors.description}</span>}
@@ -235,9 +306,25 @@ export const CourseForm: React.FC<CourseFormProps> = ({ mode }) => {
 
           <Card>
             <CardContent className="p-6 space-y-4">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Scope Settings</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Faculty & Scope Settings</span>
               
               <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <UserCheck className="h-3.5 w-3.5 text-violet-400" />
+                  <span>Assign Specific Teacher</span>
+                </label>
+                <Select value={selectedTeacherId} onChange={handleInputChange(setSelectedTeacherId)}>
+                  <option value="">-- No Teacher Assigned --</option>
+                  {teachers.map(t => (
+                    <option key={t.id} value={String(t.id)}>
+                      {t.name || t.username} ({t.email})
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-[11px] text-slate-500">Only assigned courses are available on teacher dashboards.</p>
+              </div>
+
+              <div className="space-y-1 pt-2 border-t border-slate-800">
                 <label className="text-xs font-semibold text-slate-300">Course Type</label>
                 <Select value={type} onChange={handleInputChange(setType)}>
                   <option value="Online">Online</option>

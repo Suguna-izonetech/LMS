@@ -243,6 +243,23 @@ def get_dashboard(
     return {
         "total_assigned_courses": total_courses,
         "total_students": total_students,
+        "assigned_courses": [
+            {
+                "id": c.id,
+                "title": c.title,
+                "code": c.code,
+                "description": c.description,
+                "course_type": c.course_type,
+                "visibility": c.visibility,
+                "status": c.status,
+                "duration": c.duration or "Self-paced",
+                "start_date": c.start_date.isoformat() if c.start_date else None,
+                "thumbnail_url": c.thumbnail_url,
+                "active_batches_count": db.query(Batch).filter(Batch.course_id == c.id, Batch.status == "Active").count(),
+                "student_count": db.query(Student).join(Student.courses).filter(Course.id == c.id).count()
+            }
+            for c in assigned_courses
+        ],
         "today_classes": [
             {"id": c.id, "title": c.title, "time": c.scheduled_date.strftime("%I:%M %p"), "status": c.status, "url": c.meeting_link}
             for c in today_classes
@@ -289,6 +306,11 @@ def get_courses(
             "title": c.title,
             "code": c.code,
             "description": c.description,
+            "course_type": c.course_type,
+            "status": c.status,
+            "duration": c.duration or "Self-paced",
+            "start_date": c.start_date.isoformat() if c.start_date else None,
+            "thumbnail_url": c.thumbnail_url,
             "student_count": student_count
         })
     return result
@@ -389,6 +411,8 @@ def get_course_details(
         "title": course.title,
         "code": course.code,
         "description": course.description,
+        "duration": course.duration or "Self-paced",
+        "start_date": course.start_date.isoformat() if course.start_date else None,
         "batches": batches,
         "live_classes": live_classes,
         "materials": materials,

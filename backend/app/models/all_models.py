@@ -134,6 +134,9 @@ class Course(Base):
     course_type = Column(String(50), default="Online") # Online, Offline, Hybrid
     visibility = Column(String(50), default="Public") # Public, Private
     status = Column(String(50), default="Draft") # Draft, Published
+    duration = Column(String(100), nullable=True) # e.g. "3 Months", "10 Weeks"
+    start_date = Column(DateTime(timezone=True), nullable=True) # When the course starts
+    price = Column(Float, default=0.0) # Course fee / payment amount
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

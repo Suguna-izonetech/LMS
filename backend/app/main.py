@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -36,6 +37,16 @@ app.add_middleware(
     # Expose Content-Disposition header so browser downloads preserve custom filename
     expose_headers=["Content-Disposition"]
 )
+
+# Global exception handler so unexpected errors return proper JSON with CORS headers
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+    )
 
 # Serve uploads directory static files
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

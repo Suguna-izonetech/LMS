@@ -11,7 +11,7 @@ from app.models.all_models import (
     QuizOption, QuizAttempt, QuizAnswer, Task, TaskAttachment, 
     TaskSubmission, Webinar, CertificateRecord, UserNotification, NewsfeedPost,
     PrerecordedModule, Lecture, StudentLessonCompletion, TeacherFeedback,
-    InstituteAdminFeedback
+    InstituteAdminFeedback, Transaction, Notification
 )
 from app.core.dependencies import get_current_user, require_role
 
@@ -90,8 +90,44 @@ def get_student_dashboard(
     current_user: User = Depends(require_role("student")),
     db: Session = Depends(get_db)
 ):
-    courses = get_student_courses(db, current_user)
-    course_ids = [c.id for c in courses]
+    student_obj = get_or_create_student(db, current_user)
+    enrolled_courses = get_student_courses(db, current_user)
+    enrolled_ids = {c.id for c in enrolled_courses}
+    course_ids = list(enrolled_ids)
+
+    # Retrieve all courses created by the institute admin
+    admin_courses_query = db.query(Course)
+    if current_user.institute_id:
+        admin_courses_query = admin_courses_query.filter(
+            (Course.institute_id == current_user.institute_id) | (Course.institute_id == None)
+        )
+    all_admin_courses = admin_courses_query.order_by(Course.created_at.desc(), Course.id.desc()).all()
+
+    assigned_courses_data = []
+    for c in all_admin_courses:
+        is_paid = c.id in enrolled_ids
+        modules_count = len(c.prerecorded_modules) if hasattr(c, 'prerecorded_modules') else 0
+        quizzes_count = len(c.quizzes)
+        tasks_count = len(c.tasks)
+        progress = get_lesson_progress(db, student_obj, [c])["progress_pct"] if is_paid else 0.0
+
+        assigned_courses_data.append({
+            "id": c.id,
+            "title": c.title,
+            "code": c.code,
+            "description": c.description,
+            "course_type": c.course_type,
+            "duration": c.duration or "Self-paced",
+            "start_date": c.start_date.isoformat() if c.start_date else None,
+            "price": c.price if c.price is not None else 0.0,
+            "is_paid": is_paid,
+            "is_accessible": is_paid,
+            "progress_pct": progress,
+            "modules_count": modules_count,
+            "quizzes_count": quizzes_count,
+            "tasks_count": tasks_count,
+            "thumbnail_url": c.thumbnail_url
+        })
     
     today_start = datetime.combine(date.today(), datetime.min.time())
     today_end = datetime.combine(date.today(), datetime.max.time())
@@ -100,25 +136,24 @@ def get_student_dashboard(
         LiveClass.course_id.in_(course_ids),
         LiveClass.scheduled_date >= today_start,
         LiveClass.scheduled_date <= today_end
-    ).all()
+    ).all() if course_ids else []
     
     upcoming_classes = db.query(LiveClass).filter(
         LiveClass.course_id.in_(course_ids),
         LiveClass.scheduled_date > today_end,
         LiveClass.status == "upcoming"
-    ).all()
+    ).all() if course_ids else []
     
     pending_tasks = db.query(Task).filter(
         Task.course_id.in_(course_ids),
         Task.status == "published"
-    ).count()
+    ).count() if course_ids else 0
     
     active_quizzes = db.query(Quiz).filter(
         Quiz.course_id.in_(course_ids),
         Quiz.status == "published"
-    ).count()
+    ).count() if course_ids else 0
     
-    student_obj = get_student_entity(db, current_user)
     certificates_count = 0
     if student_obj:
         certificates_count = db.query(CertificateRecord).filter(
@@ -133,7 +168,9 @@ def get_student_dashboard(
     ).order_by(UserNotification.is_read.asc(), UserNotification.id.desc()).limit(5).all()
 
     return {
-        "enrolled_courses_count": len(courses),
+        "enrolled_courses_count": len(enrolled_courses),
+        "total_courses_count": len(all_admin_courses),
+        "courses": assigned_courses_data,
         "today_classes": [
             {
                 "id": c.id, 
@@ -168,22 +205,41 @@ def get_my_courses(
     current_user: User = Depends(require_role("student")),
     db: Session = Depends(get_db)
 ):
-    courses = get_student_courses(db, current_user)
     student_obj = get_or_create_student(db, current_user)
+    enrolled_courses = get_student_courses(db, current_user)
+    enrolled_ids = {c.id for c in enrolled_courses}
+    
+    # Return all courses created by the institute admin, with duration, start date, payment price, and paid/unpaid status
+    admin_courses_query = db.query(Course)
+    if current_user.institute_id:
+        admin_courses_query = admin_courses_query.filter(
+            (Course.institute_id == current_user.institute_id) | (Course.institute_id == None)
+        )
+    all_admin_courses = admin_courses_query.order_by(Course.created_at.desc(), Course.id.desc()).all()
+    
     result = []
-    for c in courses:
+    for c in all_admin_courses:
+        is_paid = c.id in enrolled_ids
         modules_count = len(c.prerecorded_modules) if hasattr(c, 'prerecorded_modules') else 0
         quizzes_count = len(c.quizzes)
         tasks_count = len(c.tasks)
+        progress = get_lesson_progress(db, student_obj, [c])["progress_pct"] if is_paid else 0.0
         result.append({
             "id": c.id,
             "title": c.title,
             "code": c.code,
             "description": c.description,
-            "progress_pct": get_lesson_progress(db, student_obj, [c])["progress_pct"],
+            "course_type": c.course_type,
+            "duration": c.duration or "Self-paced",
+            "start_date": c.start_date.isoformat() if c.start_date else None,
+            "price": c.price if c.price is not None else 0.0,
+            "is_paid": is_paid,
+            "is_accessible": is_paid,
+            "progress_pct": progress,
             "modules_count": modules_count,
             "quizzes_count": quizzes_count,
-            "tasks_count": tasks_count
+            "tasks_count": tasks_count,
+            "thumbnail_url": c.thumbnail_url
         })
     return result
 
@@ -202,6 +258,11 @@ def get_available_courses(
             "title": course.title,
             "code": course.code,
             "description": course.description,
+            "duration": course.duration or "Self-paced",
+            "start_date": course.start_date.isoformat() if course.start_date else None,
+            "price": course.price if course.price is not None else 0.0,
+            "is_paid": False,
+            "is_accessible": False,
             "modules_count": len(getattr(course, "prerecorded_modules", [])),
             "quizzes_count": len(course.quizzes),
             "tasks_count": len(course.tasks)
@@ -216,15 +277,28 @@ def get_course_detail(
     current_user: User = Depends(require_role("student")),
     db: Session = Depends(get_db)
 ):
-    course = db.query(Course).filter(Course.id == course_id, Course.status == "Published").first()
+    course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+        
+    enrolled_courses = get_student_courses(db, current_user)
+    enrolled_ids = {c.id for c in enrolled_courses}
+    if course.id not in enrolled_ids:
+        raise HTTPException(
+            status_code=403, 
+            detail="Access Denied: Payment required. Only paid courses are accessible."
+        )
         
     return {
         "id": course.id,
         "title": course.title,
         "code": course.code,
         "description": course.description,
+        "duration": course.duration,
+        "start_date": course.start_date.isoformat() if course.start_date else None,
+        "price": course.price if course.price is not None else 0.0,
+        "is_paid": True,
+        "is_accessible": True,
         "live_classes": [
             {
                 "id": lc.id, 
@@ -261,6 +335,56 @@ def get_course_detail(
                 "status": t.status
             } for t in course.tasks if t.status == "published"
         ]
+    }
+
+@router.post("/courses/{course_id}/pay")
+def pay_for_course(
+    course_id: int,
+    current_user: User = Depends(require_role("student")),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    student_obj = get_or_create_student(db, current_user)
+    if course not in student_obj.courses:
+        student_obj.courses.append(course)
+        
+    # Log Transaction
+    tx = Transaction(
+        institute_id=course.institute_id or current_user.institute_id,
+        student_id=student_obj.id,
+        course_id=course.id,
+        amount=course.price if course.price is not None else 0.0,
+        currency="USD",
+        payment_gateway="student_portal",
+        payment_status="Success",
+        invoice_reference_id=f"INV-{int(datetime.utcnow().timestamp())}-{course.id}"
+    )
+    db.add(tx)
+    
+    # Notify student
+    try:
+        notif = Notification(
+            institute_id=course.institute_id or current_user.institute_id,
+            title="Course Unlocked",
+            message=f"Payment received! You now have full access to {course.title}.",
+            notification_type="payment_success"
+        )
+        db.add(notif)
+        db.flush()
+        db.add(UserNotification(user_id=current_user.id, notification_id=notif.id))
+    except Exception as e:
+        print("Notification error:", e)
+        
+    db.commit()
+    
+    return {
+        "message": f"Payment successful! You now have full access to {course.title}.",
+        "course_id": course.id,
+        "is_paid": True,
+        "is_accessible": True
     }
 
 @router.get("/live-classes")

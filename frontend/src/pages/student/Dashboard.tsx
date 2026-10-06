@@ -2,11 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { BookOpen, Video, HelpCircle, CheckSquare, Award, ArrowRight, Play, Clock, Sparkles } from 'lucide-react';
 import api from '../../api/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
 import { LoadingState } from '../../components/ui/LoadingState';
+
+interface StudentCourseItem {
+  id: number;
+  title: string;
+  code: string;
+  description: string;
+  course_type: string;
+  duration: string;
+  start_date: string | null;
+  price: number;
+  is_paid: boolean;
+  is_accessible: boolean;
+  progress_pct: number;
+  modules_count: number;
+  quizzes_count: number;
+  tasks_count: number;
+  thumbnail_url?: string;
+}
 
 interface DashboardData {
   enrolled_courses_count: number;
+  total_courses_count?: number;
+  courses?: StudentCourseItem[];
   today_classes: Array<{
     id: number;
     title: string;
@@ -61,7 +80,7 @@ export const StudentDashboard: React.FC = () => {
             Welcome back to your learning space!
           </h1>
           <p className="text-sm text-slate-300 leading-relaxed">
-            Track your course progress, attend live interactive lectures, attempt quizzes, and complete assignments.
+            Track your classes, learning tasks, and active progress. View all assigned institute courses in "My Courses".
           </p>
         </div>
       </div>
@@ -71,11 +90,23 @@ export const StudentDashboard: React.FC = () => {
         <Card className="hover:border-sky-500/40 transition-all">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-400">Enrolled Courses</p>
+              <p className="text-xs font-medium text-slate-400">Paid & Enrolled Courses</p>
               <p className="font-display text-2xl font-bold text-slate-100 mt-1">{data?.enrolled_courses_count || 0}</p>
             </div>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
               <BookOpen className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-sky-500/40 transition-all">
+          <CardContent className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-400">All Available Courses</p>
+              <p className="font-display text-2xl font-bold text-slate-100 mt-1">{data?.courses?.length || 0}</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+              <Award className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
@@ -103,22 +134,11 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="hover:border-sky-500/40 transition-all">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-400">Certificates Earned</p>
-              <p className="font-display text-2xl font-bold text-slate-100 mt-1">{data?.certificates_count || 0}</p>
-            </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-              <Award className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      {/* Main Content Grid: Live Sessions and Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
         {/* Today's Live Sessions */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
@@ -128,11 +148,8 @@ export const StudentDashboard: React.FC = () => {
                   <Video className="h-4.5 w-4.5 text-sky-400" />
                   <span>Today's Live Classes</span>
                 </CardTitle>
-                <CardDescription>Scheduled interactive class sessions</CardDescription>
+                <CardDescription>Scheduled interactive class sessions for paid courses</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" className="text-sky-400 hover:text-sky-300" disabled>
-                View All
-              </Button>
             </CardHeader>
             <CardContent>
               {data?.today_classes && data.today_classes.length > 0 ? (
@@ -224,7 +241,9 @@ export const StudentDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
+
     </div>
   );
 };
 export default StudentDashboard;
+

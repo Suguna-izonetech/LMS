@@ -10,6 +10,9 @@ class CourseBase(BaseModel):
     visibility: Optional[str] = "Public"
     status: Optional[str] = "Draft"
     thumbnail_url: Optional[str] = None
+    duration: Optional[str] = None
+    start_date: Optional[datetime] = None
+    price: Optional[float] = 0.0
 
 class CourseCreate(CourseBase):
     pass
@@ -22,6 +25,19 @@ class CourseUpdate(BaseModel):
     visibility: Optional[str] = None
     status: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    duration: Optional[str] = None
+    start_date: Optional[datetime] = None
+    price: Optional[float] = None
+
+class TeacherSimple(BaseModel):
+    id: int
+    name: Optional[str] = None
+    username: str
+    email: str
+    profile_image_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class CourseResponse(CourseBase):
     id: int
@@ -29,6 +45,11 @@ class CourseResponse(CourseBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     active_batches_count: Optional[int] = 0
+    teachers: Optional[List[TeacherSimple]] = []
 
     class Config:
         from_attributes = True
+
+class AssignTeacherRequest(BaseModel):
+    teacher_id: Optional[int] = None
+    teacher_ids: Optional[List[int]] = None

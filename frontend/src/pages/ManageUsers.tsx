@@ -36,6 +36,7 @@ interface UserData {
   phone: string;
   role: string;
   is_active: boolean;
+  status?: string;
   created_at: string;
 }
 
@@ -77,60 +78,63 @@ const UserTable: React.FC<UserTableProps> = ({ data, onToggleStatus }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedData.map(u => (
-            <TableRow key={u.id}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                    {u.first_name?.[0] || 'U'}{u.last_name?.[0] || ''}
+          {paginatedData.map(u => {
+            const isActive = typeof u.is_active === 'boolean' ? u.is_active : (u.status === 'active');
+            return (
+              <TableRow key={u.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
+                      {u.first_name?.[0] || 'U'}{u.last_name?.[0] || ''}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-slate-200">{u.first_name} {u.last_name}</span>
+                      <span className="text-xs text-slate-500">Joined: {new Date(u.created_at).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-slate-200">{u.first_name} {u.last_name}</span>
-                    <span className="text-xs text-slate-500">Joined: {new Date(u.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col gap-1 text-slate-300">
-                  <div className="flex items-center gap-1.5">
-                    <Mail className="w-3 h-3 text-slate-500" />
-                    <span className="text-xs">{u.email}</span>
-                  </div>
-                  {u.phone && (
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1 text-slate-300">
                     <div className="flex items-center gap-1.5">
-                      <Phone className="w-3 h-3 text-slate-500" />
-                      <span className="text-xs">{u.phone}</span>
+                      <Mail className="w-3 h-3 text-slate-500" />
+                      <span className="text-xs">{u.email}</span>
+                    </div>
+                    {u.phone && (
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="w-3 h-3 text-slate-500" />
+                        <span className="text-xs">{u.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={u.role === 'student' ? 'info' : u.role === 'teacher' ? 'success' : 'neutral'}>
+                    {u.role.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {isActive ? (
+                    <div className="flex items-center gap-1.5 text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Active</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-rose-400">
+                      <XCircle className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Inactive</span>
                     </div>
                   )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant={u.role === 'student' ? 'info' : u.role === 'teacher' ? 'success' : 'neutral'}>
-                  {u.role.toUpperCase()}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {u.is_active ? (
-                  <div className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Active</span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Button variant="outline" size="sm" onClick={() => onToggleStatus(u.id, isActive)}>
+                      {isActive ? 'Deactivate' : 'Activate'}
+                    </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-rose-400">
-                    <XCircle className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Inactive</span>
-                  </div>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1.5">
-                  <Button variant="outline" size="sm" onClick={() => onToggleStatus(u.id, u.is_active)}>
-                    {u.is_active ? 'Deactivate' : 'Activate'}
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       <Pagination
@@ -173,8 +177,8 @@ export const ManageUsers: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const fetchData = async () => {
-      setUiState('loading');
+  const fetchData = async (silent = false) => {
+      if (!silent) setUiState('loading');
       try {
           const res = await api.get('/institute-admin/users');
           setUsers(res.data);
@@ -184,7 +188,7 @@ export const ManageUsers: React.FC = () => {
       } catch (err) {
           console.error(err);
           showError('Failed to load users');
-          setUiState('error');
+          if (!silent) setUiState('error');
       }
   };
 
@@ -214,11 +218,18 @@ export const ManageUsers: React.FC = () => {
   };
   
   const handleToggleStatus = async (userId: number, currentStatus: boolean) => {
+      const nextStatus = !currentStatus;
+      // Optimistically update UI
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: nextStatus, status: nextStatus ? 'active' : 'inactive' } : u));
       try {
-          await api.patch(`/institute-admin/users/${userId}/status`, { is_active: !currentStatus });
-          success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-          fetchData();
+          await api.patch(`/institute-admin/users/${userId}/status`, { 
+              is_active: nextStatus,
+              status: nextStatus ? 'active' : 'inactive'
+          });
+          success(`User ${nextStatus ? 'activated' : 'deactivated'} successfully`);
+          fetchData(true);
       } catch (e) {
+          fetchData(true);
           showError("Failed to update user status.");
       }
   };

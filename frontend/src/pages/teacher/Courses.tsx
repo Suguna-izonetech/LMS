@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Users, Clock, ArrowRight, ArrowLeft, RefreshCw, AlertCircle, Calendar, FileText, CheckSquare, Activity, MessageSquare, Plus, X } from 'lucide-react';
+import { BookOpen, Users, Clock, ArrowRight, ArrowLeft, RefreshCw, AlertCircle, Calendar, FileText, CheckSquare, Activity } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { useToast } from '../../context/ToastContext';
 import { teacherApi } from '../../api/teacher';
 
 export const Courses: React.FC = () => {
-  const toast = useToast();
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [courseDetail, setCourseDetail] = useState<any>(null);
@@ -19,14 +15,6 @@ export const Courses: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Add Course State
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newCode, setNewCode] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newCourseType, setNewCourseType] = useState('Online');
-  const [creatingCourse, setCreatingCourse] = useState(false);
 
   const fetchCourses = async () => {
     try {
@@ -41,36 +29,6 @@ export const Courses: React.FC = () => {
     }
   };
 
-  const handleCreateCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !newCode.trim()) {
-      toast.error('Course title and code are required.');
-      return;
-    }
-
-    try {
-      setCreatingCourse(true);
-      await teacherApi.createCourse({
-        title: newTitle.trim(),
-        code: newCode.trim().toUpperCase(),
-        description: newDescription.trim(),
-        course_type: newCourseType,
-        batches: ['Batch A', 'Batch B', 'Batch C']
-      });
-      toast.success('New course added successfully!');
-      setNewTitle('');
-      setNewCode('');
-      setNewDescription('');
-      setNewCourseType('Online');
-      setShowAddForm(false);
-      fetchCourses();
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to create course.';
-      toast.error(msg);
-    } finally {
-      setCreatingCourse(false);
-    }
-  };
 
   const fetchCourseDetails = async (id: number) => {
     try {
@@ -149,7 +107,17 @@ export const Courses: React.FC = () => {
             </span>
           </div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{courseDetail.title}</h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">{courseDetail.description || 'No description provided.'}</p>
+          <p className="text-sm text-slate-400 mt-1 max-w-2xl">{courseDetail.description || 'No description provided.'}</p>
+          <div className="flex items-center gap-4 text-xs text-slate-400 mt-3 pt-3 border-t border-slate-800/60">
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-violet-400" />
+              <span>Duration: <strong className="text-slate-200">{courseDetail.duration || 'Self-paced'}</strong></span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-violet-400" />
+              <span>Starts: <strong className="text-slate-200">{courseDetail.start_date ? new Date(courseDetail.start_date).toLocaleDateString() : 'Immediate'}</strong></span>
+            </span>
+          </div>
         </div>
 
         {/* Tab Selector */}
@@ -372,98 +340,13 @@ export const Courses: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">
-            My Courses
+            Assigned Courses
           </h1>
           <p className="text-sm text-slate-500 font-medium">
-            View and manage all classrooms and courses assigned to you.
+            View and manage classrooms and courses assigned to you by the institute administrator.
           </p>
         </div>
-        <Button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-violet-650 hover:bg-violet-550 cursor-pointer flex items-center gap-1.5"
-        >
-          {showAddForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          <span>{showAddForm ? 'Cancel' : 'Add New Course'}</span>
-        </Button>
       </div>
-
-      {showAddForm && (
-        <Card className="max-w-2xl border-violet-500/20 bg-slate-900/60">
-          <CardHeader>
-            <CardTitle>Create & Register New Course</CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <form onSubmit={handleCreateCourse} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Course Title</label>
-                  <Input
-                    placeholder="e.g. Full Stack Web Development"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Course Code</label>
-                  <Input
-                    placeholder="e.g. FSWD-101"
-                    value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Delivery Mode</label>
-                  <Select
-                    value={newCourseType}
-                    onChange={(e) => setNewCourseType(e.target.value)}
-                    options={[
-                      { value: 'Online', label: 'Online Live Stream' },
-                      { value: 'Offline', label: 'In-Person Classroom' },
-                      { value: 'Hybrid', label: 'Hybrid Format' },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Default Batches Initialized</label>
-                  <div className="flex gap-2 pt-1">
-                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
-                      Batch A
-                    </span>
-                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
-                      Batch B
-                    </span>
-                    <span className="text-[10px] font-bold text-violet-400 bg-violet-950/40 border border-violet-900/40 px-2 py-1 rounded">
-                      Batch C
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400">Course Description / Syllabus Overview</label>
-                <Input
-                  placeholder="Outline topics, weekly milestone objectives, and curriculum scope..."
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={creatingCourse}
-                className="w-full bg-violet-650 hover:bg-violet-550 cursor-pointer mt-2"
-              >
-                {creatingCourse ? 'Creating Course...' : 'Create Course & Assign Batches'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       {courses.length === 0 ? (
         <Card>
@@ -472,7 +355,7 @@ export const Courses: React.FC = () => {
               <BookOpen className="h-6 w-6" />
             </div>
             <p className="text-sm font-semibold text-slate-300">No courses assigned yet</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">Click "Add New Course" above to create your first course and set up classroom batches.</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">You currently have no courses assigned. When the institute administrator assigns a course to you, it will appear here.</p>
           </CardContent>
         </Card>
       ) : (
@@ -489,11 +372,30 @@ export const Courses: React.FC = () => {
               </CardHeader>
               
               <CardContent className="p-5 flex-1 space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock className="h-4 w-4 text-violet-400 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-slate-200">{course.duration || 'Self-paced'}</p>
+                      <p className="text-[10px] text-slate-500">Duration</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Calendar className="h-4 w-4 text-violet-400 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-slate-200">
+                        {course.start_date ? new Date(course.start_date).toLocaleDateString() : 'Immediate'}
+                      </p>
+                      <p className="text-[10px] text-slate-500">Starts</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs pt-3 border-t border-slate-850">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Users className="h-4 w-4 text-violet-400" />
                     <div>
-                      <p className="font-bold text-slate-200">{course.student_count}</p>
+                      <p className="font-bold text-slate-200">{course.student_count ?? 0}</p>
                       <p className="text-[10px] text-slate-550">Enrolled Students</p>
                     </div>
                   </div>

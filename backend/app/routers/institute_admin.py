@@ -14,13 +14,13 @@ from app.models.all_models import (
     Quiz, QuizQuestion, QuizOption, QuizAttempt, QuizAnswer
 )
 from app.core.dependencies import require_institute_admin
-from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
+from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse, AssignTeacherRequest, TeacherSimple
 from app.schemas.library import BookResponse, StudyMaterialResponse
 from app.schemas.tasks import TaskResponse, TaskCreate, TaskUpdate
 from app.schemas.quiz import QuizResponse, QuizCreate, QuizUpdate
 from app.schemas.webinars import WebinarResponse, WebinarCreate, WebinarUpdate
 from app.schemas.consultations import ConsultationResponse, ConsultationCreate, ConsultationUpdate, ConsultationSlotResponse, ConsultationSlotCreate, ConsultationBookingResponse
-from app.schemas.users import InstituteUserCreate, InstituteUserResponse, BulkUserImportResult
+from app.schemas.users import InstituteUserCreate, InstituteUserResponse, BulkUserImportResult, UserStatusUpdateRequest
 from app.schemas.roles import RoleResponse, RoleCreate, RoleUpdate, PermissionResponse
 from app.schemas.notifications import NotificationResponse, NotificationCreate, NotificationUpdate
 from app.schemas.transactions import TransactionResponse, MonthlySummaryItem
@@ -133,6 +133,16 @@ def get_courses(current_user: User = Depends(require_institute_admin), db: Sessi
     result = []
     for c in courses:
         active_batches_count = db.query(Batch).filter(Batch.course_id == c.id).count()
+        teachers_list = [
+            {
+                "id": t.id,
+                "name": t.name or t.username,
+                "username": t.username,
+                "email": t.email,
+                "profile_image_url": t.profile_image_url
+            }
+            for t in c.teachers
+        ]
         c_dict = {
             "id": c.id,
             "title": c.title,
@@ -142,10 +152,14 @@ def get_courses(current_user: User = Depends(require_institute_admin), db: Sessi
             "visibility": c.visibility,
             "status": c.status,
             "thumbnail_url": c.thumbnail_url,
+            "duration": c.duration,
+            "start_date": c.start_date,
+            "price": c.price if c.price is not None else 0.0,
             "institute_id": c.institute_id,
             "created_at": c.created_at,
             "updated_at": c.updated_at,
-            "active_batches_count": active_batches_count
+            "active_batches_count": active_batches_count,
+            "teachers": teachers_list
         }
         result.append(c_dict)
     return result
@@ -157,6 +171,16 @@ def get_course(course_id: int, current_user: User = Depends(require_institute_ad
         raise HTTPException(status_code=404, detail="Course not found")
     
     active_batches_count = db.query(Batch).filter(Batch.course_id == course.id, Batch.status == 'Active').count()
+    teachers_list = [
+        {
+            "id": t.id,
+            "name": t.name or t.username,
+            "username": t.username,
+            "email": t.email,
+            "profile_image_url": t.profile_image_url
+        }
+        for t in course.teachers
+    ]
     return {
         "id": course.id,
         "title": course.title,
@@ -166,10 +190,14 @@ def get_course(course_id: int, current_user: User = Depends(require_institute_ad
         "visibility": course.visibility,
         "status": course.status,
         "thumbnail_url": course.thumbnail_url,
+        "duration": course.duration,
+        "start_date": course.start_date,
+        "price": course.price if course.price is not None else 0.0,
         "institute_id": course.institute_id,
         "created_at": course.created_at,
         "updated_at": course.updated_at,
-        "active_batches_count": active_batches_count
+        "active_batches_count": active_batches_count,
+        "teachers": teachers_list
     }
 
 @router.post("/courses", response_model=CourseResponse)
@@ -180,6 +208,10 @@ def create_course(
     course_type: str = Form("Online"),
     visibility: str = Form("Public"),
     status: str = Form("Draft"),
+    duration: Optional[str] = Form(None),
+    start_date: Optional[str] = Form(None),
+    price: Optional[float] = Form(0.0),
+    teacher_ids: Optional[str] = Form(None),
     thumbnail: UploadFile = File(None),
     current_user: User = Depends(require_institute_admin), 
     db: Session = Depends(get_db)
@@ -199,6 +231,16 @@ def create_course(
             shutil.copyfileobj(thumbnail.file, buffer)
         thumbnail_url = f"/uploads/thumbnails/{file_name}"
         
+    parsed_start_date = None
+    if start_date:
+        try:
+            parsed_start_date = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        except Exception:
+            try:
+                parsed_start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            except Exception:
+                parsed_start_date = None
+
     new_course = Course(
         title=title,
         code=code,
@@ -206,13 +248,53 @@ def create_course(
         course_type=course_type,
         visibility=visibility,
         status=status,
+        duration=duration,
+        start_date=parsed_start_date,
+        price=price if price is not None else 0.0,
         thumbnail_url=thumbnail_url,
         institute_id=current_user.institute_id
     )
+
+    # Assign specific teacher(s) if provided
+    assigned_teachers = []
+    if teacher_ids:
+        try:
+            import json
+            raw_ids = json.loads(teacher_ids) if ("[" in teacher_ids) else [int(x.strip()) for x in teacher_ids.split(",") if x.strip()]
+            assigned_teachers = db.query(User).filter(User.id.in_(raw_ids)).all()
+            new_course.teachers = assigned_teachers
+        except Exception as e:
+            print("Error parsing teacher_ids in create_course:", e)
     
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
+
+    for teacher in assigned_teachers:
+        try:
+            notif = Notification(
+                institute_id=new_course.institute_id,
+                title="Course Assigned",
+                message=f"You have been assigned to lead course: {new_course.title} ({new_course.code})",
+                notification_type="course_assigned"
+            )
+            db.add(notif)
+            db.flush()
+            db.add(UserNotification(user_id=teacher.id, notification_id=notif.id))
+        except Exception as e:
+            print("Notification error:", e)
+    db.commit()
+
+    teachers_list = [
+        {
+            "id": t.id,
+            "name": t.name or t.username,
+            "username": t.username,
+            "email": t.email,
+            "profile_image_url": t.profile_image_url
+        }
+        for t in new_course.teachers
+    ]
     
     return {
         "id": new_course.id,
@@ -223,10 +305,14 @@ def create_course(
         "visibility": new_course.visibility,
         "status": new_course.status,
         "thumbnail_url": new_course.thumbnail_url,
+        "duration": new_course.duration,
+        "start_date": new_course.start_date,
+        "price": new_course.price if new_course.price is not None else 0.0,
         "institute_id": new_course.institute_id,
         "created_at": new_course.created_at,
         "updated_at": new_course.updated_at,
-        "active_batches_count": 0
+        "active_batches_count": 0,
+        "teachers": teachers_list
     }
 
 @router.put("/courses/{course_id}", response_model=CourseResponse)
@@ -238,6 +324,10 @@ def update_course(
     course_type: str = Form(None),
     visibility: str = Form(None),
     status: str = Form(None),
+    duration: Optional[str] = Form(None),
+    start_date: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    teacher_ids: Optional[str] = Form(None),
     thumbnail: UploadFile = File(None),
     current_user: User = Depends(require_institute_admin), 
     db: Session = Depends(get_db)
@@ -252,7 +342,17 @@ def update_course(
     if course_type is not None: course.course_type = course_type
     if visibility is not None: course.visibility = visibility
     if status is not None: course.status = status
-    
+    if duration is not None: course.duration = duration
+    if price is not None: course.price = price
+    if start_date is not None:
+        try:
+            course.start_date = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        except Exception:
+            try:
+                course.start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            except Exception:
+                pass
+        
     if thumbnail:
         os.makedirs("uploads/thumbnails", exist_ok=True)
         file_ext = os.path.splitext(thumbnail.filename)[1]
@@ -261,11 +361,29 @@ def update_course(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(thumbnail.file, buffer)
         course.thumbnail_url = f"/uploads/thumbnails/{file_name}"
+
+    if teacher_ids is not None:
+        try:
+            import json
+            raw_ids = json.loads(teacher_ids) if ("[" in teacher_ids) else [int(x.strip()) for x in teacher_ids.split(",") if x.strip()]
+            course.teachers = db.query(User).filter(User.id.in_(raw_ids)).all()
+        except Exception as e:
+            print("Error parsing teacher_ids in update_course:", e)
         
     db.commit()
     db.refresh(course)
     
     active_batches_count = db.query(Batch).filter(Batch.course_id == course.id, Batch.status == 'Active').count()
+    teachers_list = [
+        {
+            "id": t.id,
+            "name": t.name or t.username,
+            "username": t.username,
+            "email": t.email,
+            "profile_image_url": t.profile_image_url
+        }
+        for t in course.teachers
+    ]
     return {
         "id": course.id,
         "title": course.title,
@@ -275,10 +393,14 @@ def update_course(
         "visibility": course.visibility,
         "status": course.status,
         "thumbnail_url": course.thumbnail_url,
+        "duration": course.duration,
+        "start_date": course.start_date,
+        "price": course.price if course.price is not None else 0.0,
         "institute_id": course.institute_id,
         "created_at": course.created_at,
         "updated_at": course.updated_at,
-        "active_batches_count": active_batches_count
+        "active_batches_count": active_batches_count,
+        "teachers": teachers_list
     }
 
 @router.delete("/courses/{course_id}")
@@ -290,6 +412,137 @@ def delete_course(course_id: int, current_user: User = Depends(require_institute
     db.delete(course)
     db.commit()
     return {"detail": "Course deleted successfully"}
+
+@router.get("/teachers")
+def get_institute_teachers(
+    search: Optional[str] = None,
+    current_user: User = Depends(require_institute_admin), 
+    db: Session = Depends(get_db)
+):
+    user_roles = [r.name.lower() for r in current_user.roles]
+    is_platform_admin = any(r in {"admin", "platformadmin"} for r in user_roles)
+    
+    query = db.query(User).filter(User.roles.any(Role.name.ilike("%teacher%")))
+    if not is_platform_admin and current_user.institute_id:
+        query = query.filter((User.institute_id == current_user.institute_id) | (User.institute_id == None))
+        
+    if search:
+        query = query.filter(User.username.ilike(f"%{search}%") | User.email.ilike(f"%{search}%") | User.name.ilike(f"%{search}%"))
+        
+    teachers = query.all()
+    result = []
+    for t in teachers:
+        assigned_count = db.query(Course).filter(Course.teachers.any(id=t.id)).count()
+        result.append({
+            "id": t.id,
+            "name": t.name or t.username,
+            "username": t.username,
+            "email": t.email,
+            "phone": t.phone,
+            "profile_image_url": t.profile_image_url,
+            "is_active": t.is_active,
+            "assigned_courses_count": assigned_count
+        })
+    return result
+
+@router.post("/courses/{course_id}/assign-teacher")
+def assign_course_teacher(
+    course_id: int,
+    payload: AssignTeacherRequest,
+    current_user: User = Depends(require_institute_admin),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    user_roles = [r.name.lower() for r in current_user.roles]
+    is_platform_admin = any(r in {"admin", "platformadmin"} for r in user_roles)
+    if not is_platform_admin and current_user.institute_id and course.institute_id and course.institute_id != current_user.institute_id:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this course")
+        
+    target_ids = []
+    if payload.teacher_ids is not None:
+        target_ids = payload.teacher_ids
+    elif payload.teacher_id is not None:
+        target_ids = [payload.teacher_id]
+        
+    teachers = db.query(User).filter(User.id.in_(target_ids)).all() if target_ids else []
+    course.teachers = teachers
+    db.commit()
+    db.refresh(course)
+    
+    # Notify newly assigned teachers
+    for teacher in teachers:
+        try:
+            notif = Notification(
+                institute_id=course.institute_id,
+                title="Course Assigned",
+                message=f"You have been assigned to lead course: {course.title} ({course.code})",
+                notification_type="course_assigned"
+            )
+            db.add(notif)
+            db.flush()
+            db.add(UserNotification(user_id=teacher.id, notification_id=notif.id))
+        except Exception as e:
+            print("Notification error:", e)
+    db.commit()
+    
+    return {
+        "message": f"Successfully updated teacher assignment for '{course.title}'",
+        "course_id": course.id,
+        "teachers": [
+            {
+                "id": t.id,
+                "name": t.name or t.username,
+                "username": t.username,
+                "email": t.email,
+                "profile_image_url": t.profile_image_url
+            }
+            for t in course.teachers
+        ]
+    }
+
+@router.post("/courses/{course_id}/unassign-teacher")
+def unassign_course_teacher(
+    course_id: int,
+    payload: Optional[AssignTeacherRequest] = None,
+    current_user: User = Depends(require_institute_admin),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    user_roles = [r.name.lower() for r in current_user.roles]
+    is_platform_admin = any(r in {"admin", "platformadmin"} for r in user_roles)
+    if not is_platform_admin and current_user.institute_id and course.institute_id and course.institute_id != current_user.institute_id:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this course")
+        
+    if payload and payload.teacher_id:
+        course.teachers = [t for t in course.teachers if t.id != payload.teacher_id]
+    elif payload and payload.teacher_ids:
+        course.teachers = [t for t in course.teachers if t.id not in payload.teacher_ids]
+    else:
+        course.teachers = []
+        
+    db.commit()
+    db.refresh(course)
+    
+    return {
+        "message": f"Teacher unassigned from '{course.title}'",
+        "course_id": course.id,
+        "teachers": [
+            {
+                "id": t.id,
+                "name": t.name or t.username,
+                "username": t.username,
+                "email": t.email,
+                "profile_image_url": t.profile_image_url
+            }
+            for t in course.teachers
+        ]
+    }
 
 # --- LIVE CLASSES MODULE ---
 
@@ -1277,6 +1530,7 @@ def get_institute_users(
             "phone": u.phone or "",
             "role": r_name,
             "status": "active" if u.is_active else "inactive",
+            "is_active": bool(u.is_active),
             "institute_id": u.institute_id,
             "created_at": u.created_at or datetime.utcnow()
         })
@@ -1355,6 +1609,7 @@ def create_institute_user(
         "phone": new_user.phone or "",
         "role": target_role,
         "status": "active" if new_user.is_active else "inactive",
+        "is_active": bool(new_user.is_active),
         "institute_id": new_user.institute_id,
         "created_at": new_user.created_at or datetime.utcnow()
     }
@@ -1364,7 +1619,7 @@ def create_institute_user(
 def update_user_status(
     target_user_id: int,
     status: Optional[str] = None,
-    payload: Optional[dict] = None,
+    payload: Optional[UserStatusUpdateRequest] = None,
     current_user: User = Depends(require_institute_admin),
     db: Session = Depends(get_db)
 ):
@@ -1378,10 +1633,10 @@ def update_user_status(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    if payload and "is_active" in payload:
-        user.is_active = bool(payload["is_active"])
-    elif payload and "status" in payload:
-        user.is_active = (payload["status"] == "active")
+    if payload and payload.is_active is not None:
+        user.is_active = bool(payload.is_active)
+    elif payload and payload.status is not None:
+        user.is_active = (payload.status == "active")
     elif status:
         user.is_active = (status == "active")
         
